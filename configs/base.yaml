@@ -1,0 +1,58 @@
+model:
+  provider: groq
+  name: openai/gpt-oss-20b
+  reasoning_effort: low  # confirm the API accepts this; remove it if it errors
+  max_tokens: 1024       # reasoning tokens may count against this limit
+
+retrieval:
+  embedder: sentence-transformers/all-MiniLM-L6-v2
+  k: 3
+  setting: distractor    # distractor | pooled
+
+data:
+  manifest_dir: data/manifests
+  split: dev             # debug | dev | test
+
+nli:
+  model: cross-encoder/nli-deberta-v3-base
+  window: 2
+  theta_s: 0.5
+  theta_c: 0.5
+
+erag:
+  mode: active           # observe | active
+  max_hops: 2
+  sc_samples: 5
+  sc_temperature: 0.7
+  w_s: 1.0
+  w_c: 2.0
+  theta_fast: 0.8
+  theta_gap: 0.6
+  theta_abs: 0.4
+  max_claims: 5
+  pool_cap: 12
+  confidence_def: majority # majority | draft_agreement
+
+ablate: []               # no_nli | no_conf | no_prop | no_adaptive | no_fast | no_eig
+
+ircot:
+  max_steps: 4
+  pool_cap: 12
+
+memory:
+  enabled: false
+  capacity: 200
+  w_mem: 0.5
+  theta_mem: 0.75
+  theta_write: 0.7
+  theta_surprise: 0.6
+  decay: 0.98
+
+run:
+  system: standard       # standard | ircot | erag | closed_book
+  name: standard_dev
+  cache: true            # set false for latency runs
+  cache_namespace: dev_v1
+  out_dir: results
+  seed: 13
+

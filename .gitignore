@@ -1,0 +1,25 @@
+# Environment and secrets
+.venv/
+venv/
+.env
+*.env
+
+# Cache and results
+results/cache.sqlite
+results/nli_memo.pkl
+results/*.jsonl
+results/*.png
+mlruns/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+
+# Raw data (large external benchmarks)
+data/raw/
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
