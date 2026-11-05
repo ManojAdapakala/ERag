@@ -1,6 +1,7 @@
 """Natural Language Inference (NLI) evidence verifier using Cross-Encoder models."""
 
 import hashlib
+import re
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import torch
@@ -73,6 +74,49 @@ class NLI:
             self.memo[key] = (max_ent, max_con)
         return self.memo[key]
 
+    @staticmethod
+    def _extract_subject_entities(claim: str) -> List[str]:
+        """Extract core subject entities, proper noun phrases, and titles from the claim's subject clause."""
+        verb_re = re.compile(
+            r'\b(is|was|were|are|has|have|had|served|initiated|became|directed|starred|defeated|won|played|share|shares|co-wrote|managed|competed|lasted|born)\b',
+            re.IGNORECASE,
+        )
+        m = verb_re.search(claim)
+        subj_clause = claim[:m.start()].strip() if m else claim
+
+        entities = []
+        # 1. Quoted strings in subject clause
+        quoted = re.findall(r'"([^"]+)"', subj_clause)
+        entities.extend([q.strip() for q in quoted if len(q.strip()) >= 2])
+
+        # 2. Capitalized phrases in subject clause
+        cap_phrases = re.findall(r'\b(?:[A-Z0-9][a-zA-Z0-9/\'-]*(?:\s+[A-Z0-9][a-zA-Z0-9/\'-]*)*)\b', subj_clause)
+        ignore = {
+            "The", "Both", "Because", "What", "Are", "Were", "And", "Or", "In", "On", "At",
+            "From", "To", "A", "An", "This", "That", "It", "Yes", "No", "When", "Where", "Who", "Why", "How",
+            "American", "British", "English", "French", "German", "Canadian", "Italian", "Japanese", "Australian",
+            "Russian", "Spanish", "Chinese", "South Korean", "Korean", "Mexican", "Indian"
+        }
+        for p in cap_phrases:
+            words = [w for w in p.split() if w not in ignore]
+            if words:
+                cleaned = " ".join(words)
+                if len(cleaned) >= 2 and cleaned not in entities:
+                    entities.append(cleaned)
+
+        # If no entities found in subject clause, extract from full claim with demonyms/countries ignored
+        if not entities:
+            cap_full = re.findall(r'\b(?:[A-Z0-9][a-zA-Z0-9/\'-]*(?:\s+[A-Z0-9][a-zA-Z0-9/\'-]*)*)\b', claim)
+            ignore_full = ignore | {"United States", "USA", "UK", "New York", "California"}
+            for p in cap_full:
+                words = [w for w in p.split() if w not in ignore_full]
+                if words:
+                    cleaned = " ".join(words)
+                    if len(cleaned) >= 2 and cleaned not in entities:
+                        entities.append(cleaned)
+
+        return entities
+
     def verify(
         self,
         claim: str,
@@ -83,22 +127,42 @@ class NLI:
         """Classify relationship between claim and evidence passages: supported, contradicted, or unresolved."""
         sup: List[Tuple[str, float]] = []
         con: List[Tuple[str, float]] = []
+        ents = self._extract_subject_entities(claim)
 
         for p in passages:
             e, c = self.best(claim, p)
             w = float(p.get("weight", 1.0))
             e, c = e * w, c * w
             title = p.get("title", "unknown")
+            base_title = re.sub(r'\s*\([^)]*\)', '', title).strip().lower()
             if e >= theta_s:
                 sup.append((title, e))
-            if c >= theta_c:
+
+            # Contradiction requires that passage actually discusses the subject entity of the claim.
+            # Topic-disjoint passages with different entities produce spurious cross-encoder contradictions.
+            p_text = (
+                title + " " + (" ".join(p.get("sentences", [])) if isinstance(p.get("sentences"), list) else p.get("text", ""))
+            ).lower()
+
+            if ents:
+                title_in_claim = bool(len(base_title) >= 3 and base_title in claim.lower())
+                ent_in_passage = any(
+                    ent.lower() in title.lower() or re.search(rf"\b{re.escape(ent.lower())}\b", p_text)
+                    for ent in ents
+                )
+                mentions_subject = title_in_claim or ent_in_passage
+            else:
+                subj_tokens = [w.lower() for w in re.findall(r"\b[a-zA-Z]{3,}\b", claim) if w.lower() not in {"the", "and", "was", "were", "are", "for", "with"}]
+                mentions_subject = any(re.search(rf"\b{re.escape(tok)}\b", p_text) for tok in subj_tokens) if subj_tokens else True
+
+            if c >= theta_c and mentions_subject:
                 con.append((title, c))
 
         be = max((x for _, x in sup), default=0.0)
         bc = max((x for _, x in con), default=0.0)
 
         if sup and con:
-            status = "supported" if be > bc else "contradicted"
+            status = "supported" if be >= (bc - 0.05) else "contradicted"
             conflict = True
         elif sup:
             status = "supported"

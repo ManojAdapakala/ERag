@@ -20,7 +20,9 @@ __pycache__/
 # Raw data (large external benchmarks)
 data/raw/
 
-# IDE and OS
+# Scratch scripts
+scratch/
+
 .vscode/
 .idea/
 .DS_Store

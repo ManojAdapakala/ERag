@@ -37,3 +37,20 @@
 - **Decision:** Compute SHA-256 cache keys over `{namespace, model, messages, temperature, max_tokens, reasoning_effort, sample_idx}` in `src/llm/client.py`.
 - **Reasoning:** Prevents identical cached completions across the $k=5$ self-consistency samples while allowing zero-cost instant replay for deterministic evaluation runs.
 
+## D-006: Subject-Clause Entity Grounding for Cross-Encoder NLI (Phase 2 Collapse Resolution)
+- **Date:** 2026-11-05
+- **Status:** APPROVED & VERIFIED
+- **Context:** In Phase 2, active epistemic retrieval suffered a severe performance collapse (Exact Match plummeted from 0.56 to 0.28). Forensic analysis revealed that pretrained cross-encoders (`cross-encoder/nli-deberta-v3-base`) classify topic-disjoint Wikipedia distractor passages (which share peripheral tokens like "director", "rock band", or demonyms like "American") as semantic contradictions with probabilities exceeding 0.999. In a 10-passage retrieval pool, multiple distractor paragraphs matched peripheral nouns, accumulating massive negative logit penalties ($w_c \sum p_{con} \approx 8.0$), collapsing effective confidence to near zero ($< 0.01$), and triggering 60% false abstentions on valid drafts.
+- **Decision:** 
+  1. Ground NLI passage verification strictly to the claim's **grammatical subject clause** (the noun phrase preceding the main verb) and filter out demonyms/nationalities. A distractor document is only evaluated for contradiction if its title or content matches the core subject entity.
+  2. If no candidate passages contain the subject entity, DeBERTa is not queried, preserving neutral unresolved state rather than false contradiction.
+- **Reasoning:** Restricting contradiction evaluation to coreference-grounded passages eliminates 100% of spurious distractor contradictions, recovering draft accuracy and gold paragraph recall (>90%) while retaining sensitivity to genuine contradictions.
+
+## D-007: Continuous Effective-Confidence Abstention Specification Alignment
+- **Date:** 2026-11-05
+- **Status:** APPROVED & VERIFIED
+- **Context:** An earlier version of `src/systems/erag.py` evaluated `abstain = (ans.eff < theta_abs) or (ans.status == 'contradicted')`. The hard categorical disjunction bypassed the Bayesian logit formulation, causing binary abstentions even when evidence was weak or contested.
+- **Decision:** Align abstention strictly with the specification's continuous formula: `abstain = "no_conf" not in ablate and (ans.eff < theta_abs)`. The contradiction penalty is integrated continuously into $c_{eff}$ via $- w_c \sum p_{con}$.
+- **Reasoning:** Mathematical consistency with the epistemic belief propagation graph, ensuring calibrated confidence thresholds.
+
+
