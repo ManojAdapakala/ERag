@@ -69,3 +69,4 @@ def test_gaps_identification():
     assert len(gaps) == 1
     assert gaps[0].text == "Claim A"
     assert g.weakest(gaps).text == "Claim A"
+

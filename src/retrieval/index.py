@@ -98,3 +98,4 @@ class RetrieverFactory:
         if self.pooled is not None:
             return self.pooled
         return Retriever(paragraphs_from_item(item), self.emb)
+

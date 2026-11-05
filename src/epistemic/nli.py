@@ -111,3 +111,4 @@ class NLI:
             conflict = False
 
         return {"status": status, "conflict": conflict, "sup": sup, "con": con}
+

@@ -61,3 +61,4 @@ class BeliefMemory:
 
 1. **Stream Evaluation:** Run 30 questions in 5 entity-sharing clusters (`data/manifests/stream.jsonl`) with memory disabled vs enabled.
 2. **Wrong-Belief Planted Test:** Plant 5 false beliefs into memory (`data/manifests/planted.json`). Verify that when fresh evidence contradicts the false belief, the belief is deleted (`"event": "overridden"`) and does not corrupt subsequent answers.
+

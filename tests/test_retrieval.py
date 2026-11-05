@@ -83,3 +83,4 @@ def test_gold_supporting_facts_present_in_distractor_context():
         context_titles = {t for t, _ in item["context"]}
         gold_titles = {t for t, _ in item["supporting_facts"]}
         assert gold_titles.issubset(context_titles), f"Gold titles missing in context for question {item['_id']}"
+

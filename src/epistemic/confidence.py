@@ -40,3 +40,4 @@ def self_consistency(
         "conf_draft_agreement": float(n_draft_match / k),
         "samples": samples,
     }
+

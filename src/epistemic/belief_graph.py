@@ -120,3 +120,4 @@ class BeliefGraph:
     def to_json(self) -> List[Dict[str, Any]]:
         """Serialize belief graph nodes into inspectable dictionaries."""
         return [vars(c).copy() for c in self.claims]
+

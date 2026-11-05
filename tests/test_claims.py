@@ -71,3 +71,4 @@ def test_self_consistency_confidence():
     assert sc["conf_majority"] == 3 / 5  # 0.6
     assert sc["conf_draft_agreement"] == 3 / 5  # 0.6
     assert len(sc["samples"]) == 5
+

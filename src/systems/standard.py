@@ -42,3 +42,4 @@ def run_closed_book(
         "pool_titles": [],
         "hops": 0,
     }
+

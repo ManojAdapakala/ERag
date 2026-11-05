@@ -98,3 +98,4 @@ def brier(conf: List[float], correct: List[int]) -> float:
     conf_arr = np.asarray(conf, dtype=float)
     corr_arr = np.asarray(correct, dtype=float)
     return float(np.mean((conf_arr - corr_arr) ** 2))
+

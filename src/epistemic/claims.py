@@ -79,3 +79,4 @@ def extract_claims(
             }
         ]
     return claims
+

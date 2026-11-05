@@ -103,3 +103,4 @@ When `erag.mode = "observe"`:
     "claim_fallbacks": int,        # Count of claims generated via fallback
 }
 ```
+

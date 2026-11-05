@@ -116,3 +116,4 @@ To ensure academic rigor, all differences between this implementation and the or
    - Executes successfully on `debug-50` with 0 failures.
    - Average hops $> 1.0$ (proves iterative expansion triggers on multi-hop questions).
    - Intermediate reasoning sentences (`steps`) and final evidence pools (`pool_titles`) are recorded in raw predictions.
+

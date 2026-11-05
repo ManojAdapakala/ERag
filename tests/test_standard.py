@@ -66,3 +66,4 @@ def test_summarize_jsonl():
         assert abs(s["selective_em"] - 0.5) < 1e-5
     finally:
         os.remove(tmp_name)
+
