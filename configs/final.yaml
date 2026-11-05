@@ -1,0 +1,24 @@
+# Gate G3: Dev hyperparameter freeze configuration
+# Calibrated via scripts/weight_grid.py on dev split (Experiment E2)
+# Optimal parameters: w_s=1.0, w_c=1.0, propagate=True (AUROC=0.6740, ECE=0.3734, Brier=0.2695)
+
+erag:
+  mode: active
+  max_hops: 2
+  sc_samples: 5
+  sc_temperature: 0.7
+  w_s: 1.0
+  w_c: 1.0
+  theta_fast: 0.8
+  theta_gap: 0.6
+  theta_abs: 0.4
+  max_claims: 5
+  pool_cap: 12
+  confidence_def: majority
+
+ablate: []
+
+run:
+  cache: true
+  cache_namespace: test_v1
+

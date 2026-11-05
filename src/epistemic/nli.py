@@ -1,7 +1,9 @@
 """Natural Language Inference (NLI) evidence verifier using Cross-Encoder models."""
 
 import hashlib
+import pickle
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import torch
@@ -30,7 +32,24 @@ class NLI:
         self.i_con = next(i for i, l in labels.items() if "contra" in l)
         self.window = window
         self.batch = batch
+        self.memo_path = Path("results/nli_memo.pkl")
         self.memo: Dict[str, Tuple[float, float]] = {}
+        if self.memo_path.exists():
+            try:
+                with open(self.memo_path, "rb") as mf:
+                    self.memo = pickle.load(mf)
+            except Exception:
+                pass
+        self._dirty_count = 0
+
+    def _save_memo(self):
+        try:
+            self.memo_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.memo_path, "wb") as mf:
+                pickle.dump(self.memo, mf)
+            self._dirty_count = 0
+        except Exception:
+            pass
 
     @torch.no_grad()
     def _probs(self, premises: List[str], hypothesis: str) -> np.ndarray:
@@ -72,6 +91,9 @@ class NLI:
             max_ent = float(P[:, self.i_ent].max()) if len(P) > 0 else 0.0
             max_con = float(P[:, self.i_con].max()) if len(P) > 0 else 0.0
             self.memo[key] = (max_ent, max_con)
+            self._dirty_count += 1
+            if self._dirty_count >= 20:
+                self._save_memo()
         return self.memo[key]
 
     @staticmethod
