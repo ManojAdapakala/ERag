@@ -10,6 +10,9 @@ results/nli_memo.pkl
 results/*.jsonl
 results/*.png
 mlruns/
+mlflow.db
+*.db
+*.db-journal
 .pytest_cache/
 __pycache__/
 *.py[cod]

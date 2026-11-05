@@ -4,7 +4,12 @@ import argparse
 import json
 import os
 import subprocess
+import sys
 import time
+
+# Ensure project root is in sys.path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from typing import Any, Dict, Generator, List, Tuple
 import mlflow
 import numpy as np
