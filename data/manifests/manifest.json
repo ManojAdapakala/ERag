@@ -1,0 +1,38 @@
+{
+  "seed": 13,
+  "raw_file": "hotpot_dev_distractor_v1.json",
+  "raw_sha256": "e3da074df24e8369009918aa5cdbdd254dadcde4c63f7569d36afd6f2268caa8",
+  "debug": {
+    "n": 50,
+    "sha256": "e5d9a28cac7a76a8bc902da34ee77daf8db1a6ae8c2e57f1de07e977f4ade2e9",
+    "by_type": {
+      "comparison": 14,
+      "bridge": 36
+    },
+    "by_level": {
+      "hard": 50
+    }
+  },
+  "dev": {
+    "n": 100,
+    "sha256": "f3b64102ab02c74af51304f078232dc0886943e3e998d59cb2a54dac97217c78",
+    "by_type": {
+      "bridge": 80,
+      "comparison": 20
+    },
+    "by_level": {
+      "hard": 100
+    }
+  },
+  "test": {
+    "n": 400,
+    "sha256": "891fd4c16d4b9c5f2023a8f0839f5ae9025a6d6170e1a4c2d25a7ee76e692f2e",
+    "by_type": {
+      "bridge": 320,
+      "comparison": 80
+    },
+    "by_level": {
+      "hard": 400
+    }
+  }
+}
