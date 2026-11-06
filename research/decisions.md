@@ -53,4 +53,25 @@
 - **Decision:** Align abstention strictly with the specification's continuous formula: `abstain = "no_conf" not in ablate and (ans.eff < theta_abs)`. The contradiction penalty is integrated continuously into $c_{eff}$ via $- w_c \sum p_{con}$.
 - **Reasoning:** Mathematical consistency with the epistemic belief propagation graph, ensuring calibrated confidence thresholds.
 
+## D-008: Hyperparameter Grid Calibration and Gate G3 Configuration Freeze
+- **Date:** 2026-11-06
+- **Status:** APPROVED & FROZEN
+- **Context:** The specification (Section 4.5 & Experiment E2) requires tuning belief graph update weights $(w_s \in [0.5, 1.0, 2.0], w_c \in [1.0, 2.0, 4.0], \text{propagate} \in [\text{True}, \text{False}])$ on dev to maximize AUROC and minimize calibration error (ECE, Brier) before freezing for final test evaluation (Gate G3).
+- **Decision:** Execute `scripts/weight_grid.py` on the dev-100 results. Optimal configuration identified:
+  - $w_s = 1.0, w_c = 1.0, \text{propagate} = \text{True} \implies \text{AUROC} = 0.6740, \text{ECE} = 0.3734, \text{Brier} = 0.2695$.
+  - Weakest-link belief propagation consistently outperformed unpropagated variants across all parameter combinations ($+0.04$ to $+0.08$ AUROC advantage).
+  - Freeze parameters into `configs/final.yaml` with isolated cache namespace `test_v1`.
+- **Reasoning:** Ensures strict test-set isolation: no hyperparameters or thresholds are tuned on test data.
+
+## D-009: Verified-Belief Episodic Memory Dynamics and Planted Contradiction Override (Experiment E5)
+- **Date:** 2026-11-06
+- **Status:** APPROVED & VERIFIED
+- **Context:** Long-running RAG systems must reuse verified beliefs to avoid redundant retrieval without permanently cementing obsolete or false information.
+- **Decision:** 
+  1. Verified beliefs are stored in episodic memory with initial confidence $c^{\text{eff}}$ when surprising ($c_0 < \theta_{\text{surprise}}$ or contradiction seen).
+  2. In subsequent queries, top-$k$ memory beliefs are retrieved and cross-checked against fresh retrieved evidence. If a stored belief is contradicted by fresh evidence, it is purged via contradiction override (`event: overridden`), preventing false repetition.
+  3. Validate using a synthetic planted test (`data/manifests/planted.json` with 5 deliberate false beliefs).
+- **Reasoning:** Empirically verified in Experiment E5: fresh contradictory evidence reliably triggers contradiction detection and purges erroneous memory nodes (e.g. purging the false belief that Wolfgang Becker was a French director born in Paris).
+
+
 
