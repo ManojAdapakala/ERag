@@ -8,7 +8,9 @@ venv/
 results/cache.sqlite
 results/nli_memo.pkl
 results/*.jsonl
+results/**/*.jsonl
 results/*.png
+results/**/*.png
 mlruns/
 mlflow.db
 *.db
