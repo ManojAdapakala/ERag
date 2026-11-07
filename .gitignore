@@ -1,32 +1,112 @@
-# Environment and secrets
-.venv/
-venv/
+# ==============================================================================
+# Git Ignore Configuration for E-RAG Academic Research Repository
+# ==============================================================================
+
+# 1. Environment Variables, Secrets & API Keys (Strict Security)
 .env
 *.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+credentials.json
 
-# Cache and results
+# 2. Virtual Environments & Local Runtimes
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+bin/
+lib/
+include/
+
+# 3. Python Bytecode, Caches & Distribution
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+MANIFEST
+
+# 4. Testing, Coverage & Type-Checking Artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+nosetests.xml
+coverage.xml
+htmlcov/
+.hypothesis/
+.mypy_cache/
+.ruff_cache/
+
+# 5. ML Models, Checkpoints, Large Embeddings & Heavy Weights
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.onnx
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.joblib
+*.parquet
+*.feather
+*.arrow
+*.faiss
+*.index
+
+# 6. Experiment Tracking, Local DBs & Memoization Stores
+mlruns/
+mlflow.db
+wandb/
+lightning_logs/
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# 7. Raw Datasets & Corpus Dumps (External / Large)
+data/raw/
+data/cache/
+
+# 8. Experimental Outputs & Large Prediction Dumps
+# (Preserve summary CSVs, exclude voluminous question-level predictions & local cache)
 results/cache.sqlite
 results/nli_memo.pkl
 results/*.jsonl
 results/**/*.jsonl
 results/*.png
 results/**/*.png
-mlruns/
-mlflow.db
-*.db
-*.db-journal
-.pytest_cache/
-__pycache__/
-*.py[cod]
+results/cost_opt/
 
-# Raw data (large external benchmarks)
-data/raw/
+# 9. Logs, Temp Files & Editor Backups
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
 
-# Scratch scripts
-scratch/
-
+# 10. IDE & OS Artifacts
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
+# 11. Scratch Workspaces & Agent Artifacts
+scratch/
+.gemini/
