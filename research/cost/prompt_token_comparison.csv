@@ -1,0 +1,5 @@
+Component,Baseline In Tokens,Optimized In Tokens,Tokens Saved / Call,Strategy
+Draft QA Prompt,480.0,480.0,0.0,Unchanged (Preserves Reader Context)
+Claim Decomposition,745.2,420.0,325.2,Incremental Re-use on unchanged drafts
+Candidate Query Generation,152.0,0.0,152.0,Bypassed in Cost mode / Gated in Balanced mode
+Post-Hop Self-Consistency,890.5,0.0,890.5,Conditional Gating when draft unchanged

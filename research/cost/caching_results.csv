@@ -1,0 +1,6 @@
+Metric,Value
+Cache SQLite Entries,"11,802 completions"
+Cache Key Digest,"SHA-256 over {ns, model, messages, temp, max_tokens, sample_idx}"
+Warm Cache Latency / Hit,< 0.5 ms
+API Network Round-trip Avoided,100.0% on identical queries
+NLI Memoization Store,"results/nli_memo.pkl (12,996 pairs memoized)"

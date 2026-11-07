@@ -1,0 +1,3 @@
+NLI Verification Mode,Pre-filter Active,Total CPU Latency (50 Q),Latency / Question,Dev-50 EM,Dev-50 F1,Answer Parity vs Baseline
+Post-hoc Grounding (Baseline),False,0.19 s,3.9 ms,0.5200,0.6228,100.0%
+Pre-inference Entity Filter,True,2.23 s,44.6 ms,0.5200,0.6228,100.0%
