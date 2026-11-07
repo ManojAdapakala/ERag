@@ -1,0 +1,33 @@
+# Phase 2: E-RAG-Cost Configuration (Minimum Computational Expenditure)
+# Target: <= 4.5 LLM calls/Q, > 70% monetary savings, warm latency <= 0.9s
+
+erag:
+  mode: active
+  max_hops: 2
+  sc_samples: 2
+  sc_temperature: 0.7
+  post_hop_resample: never
+  claim_strategy: single_atomic
+  eig_strategy: direct
+  saturation_precheck: true
+  w_s: 1.0
+  w_c: 1.0
+  theta_fast: 0.8
+  theta_gap: 0.6
+  theta_abs: 0.4
+  max_claims: 1
+  pool_cap: 12
+  confidence_def: majority
+
+nli:
+  pre_filter: true
+
+ablate: []
+
+run:
+  name: erag_cost_dev
+  system: erag
+  cache: true
+  cache_namespace: dev_cost_opt_v1
+  out_dir: results/cost_opt
+

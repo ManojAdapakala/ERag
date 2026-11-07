@@ -1,0 +1,34 @@
+# Phase 2: E-RAG-Balanced Configuration (Optimal Accuracy-Cost Trade-Off)
+# Target: <= 7.5 LLM calls/Q, > 45% monetary savings, preserving >= 98% reference accuracy
+
+erag:
+  mode: active
+  max_hops: 2
+  sc_samples: 3
+  sc_temperature: 0.7
+  post_hop_resample: conditional
+  sc_samples_post_hop: 3
+  claim_strategy: incremental
+  eig_strategy: llm
+  saturation_precheck: true
+  w_s: 1.0
+  w_c: 1.0
+  theta_fast: 0.8
+  theta_gap: 0.6
+  theta_abs: 0.4
+  max_claims: 5
+  pool_cap: 12
+  confidence_def: majority
+
+nli:
+  pre_filter: true
+
+ablate: []
+
+run:
+  name: erag_balanced_dev
+  system: erag
+  cache: true
+  cache_namespace: dev_cost_opt_v1
+  out_dir: results/cost_opt
+
