@@ -1,0 +1,9 @@
+Ablation Setting,N,EM,Token F1,Gold Paragraph Recall,All-Gold Rate,Coverage,Selective EM,Brier Score,Mean Retrievals/Q,Mean LLM Calls/Q,Median Latency (s),Mean Total Tokens,Description
+Full E-RAG Active,100,0.39,0.4799896214896215,0.925,0.85,0.59,0.6610169491525424,0.19086142213402432,2.62,14.72,21.942802786827087,9358.79,Baseline frozen system with all epistemic modules active
+w/o NLI Verification (no_nli),100,0.47,0.5746642246642246,0.775,0.57,0.78,0.6025641025641025,0.37419999999999987,1.48,9.2,0.5709186792373657,5447.78,Replaces DeBERTa NLI with neutral unresolved states
+w/o Epistemic Confidence (no_conf),100,0.54,0.6630054945054945,0.915,0.83,0.89,0.6067415730337079,0.3612475410824493,2.83,6.45,20.156312108039856,3944.81,Replaces consensus confidence c0 with 1.0 (disables abstention)
+w/o Belief Propagation (no_prop),100,0.45,0.5682912087912088,0.925,0.85,0.73,0.6164383561643836,0.24336217166181887,2.61,14.64,17.933669447898865,9258.23,Disables weakest-link DAG propagation (independent claim updating)
+w/o Adaptive Retrieval (no_adaptive),100,0.37,0.4495531135531135,0.715,0.47,0.57,0.6491228070175439,0.26091276768949595,1.0,7.0,0.7040324211120605,3950.76,Stops retrieval after initial hop (single-hop epistemic)
+w/o Fast Path (no_fast),100,0.38,0.4699896214896215,0.935,0.87,0.58,0.6551724137931034,0.18854393723967391,2.84,15.54,0.6942833662033081,9961.32,Forces retrieval to always execute maximum hops (no early exit)
+w/o EIG Query Selection (no_eig),100,0.37,0.460451806363571,0.905,0.83,0.57,0.6491228070175439,0.20177395784710292,2.49,11.88,0.6323086023330688,7827.8,Uses raw claim string as search query instead of EIG proposal
+"Pooled Setting (1,000 paras)",100,0.37,0.4628962508080155,0.9,0.81,0.56,0.6607142857142857,0.20319512231442124,2.73,15.95,13.654561519622803,11238.5,"Retrieval over full 1,000-paragraph corpus across all 100 dev questions"

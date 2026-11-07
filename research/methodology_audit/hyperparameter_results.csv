@@ -1,0 +1,153 @@
+matrix,experiment_id,parameter_name,parameter_value,em,f1,gold_recall,all_gold,coverage,selective_em,ece,brier,auroc,mean_hops,mean_llm_calls,notes
+E,E1_grid_ws0.25_wc0.25_p1,belief_weights_and_prop,"w_s=0.25,w_c=0.25,prop=True",0.5,0.6322197802197802,0.925,0.85,0.94,0.5319148936170213,0.3935097149393845,0.29878410805959055,0.6760337213970293,1.1,14.72,"w_s=0.25, w_c=0.25, propagate=True, theta_abs=0.4"
+E,E1_grid_ws0.25_wc0.5_p1,belief_weights_and_prop,"w_s=0.25,w_c=0.5,prop=True",0.48,0.6036483516483515,0.925,0.85,0.88,0.5454545454545454,0.3968690724452787,0.28023654005365595,0.6760337213970292,1.1,14.72,"w_s=0.25, w_c=0.5, propagate=True, theta_abs=0.4"
+E,E1_grid_ws0.25_wc1.0_p1,belief_weights_and_prop,"w_s=0.25,w_c=1.0,prop=True",0.45,0.5560372405372405,0.925,0.85,0.76,0.5921052631578947,0.38217209612386766,0.25605469548390536,0.6688077077478924,1.1,14.72,"w_s=0.25, w_c=1.0, propagate=True, theta_abs=0.4"
+E,E1_grid_ws0.25_wc1.5_p1,belief_weights_and_prop,"w_s=0.25,w_c=1.5,prop=True",0.45,0.5503229548229548,0.925,0.85,0.71,0.6338028169014085,0.3824704579010367,0.256162899112449,0.6696105981533521,1.1,14.72,"w_s=0.25, w_c=1.5, propagate=True, theta_abs=0.4"
+E,E1_grid_ws0.25_wc2.0_p1,belief_weights_and_prop,"w_s=0.25,w_c=2.0,prop=True",0.33,0.41194200244200246,0.925,0.85,0.52,0.6346153846153846,0.39646112285903967,0.2792916594518032,0.6342834203131273,1.1,14.72,"w_s=0.25, w_c=2.0, propagate=True, theta_abs=0.4"
+E,E1_grid_ws0.5_wc0.25_p1,belief_weights_and_prop,"w_s=0.5,w_c=0.25,prop=True",0.51,0.6422197802197802,0.925,0.85,0.95,0.5368421052631579,0.37762970339398044,0.30494656337961407,0.6682055399437977,1.1,14.72,"w_s=0.5, w_c=0.25, propagate=True, theta_abs=0.4"
+E,E1_grid_ws0.5_wc0.5_p1,belief_weights_and_prop,"w_s=0.5,w_c=0.5,prop=True",0.49,0.6136483516483515,0.925,0.85,0.89,0.550561797752809,0.38610339983291114,0.28597476237891734,0.6784423926134082,1.1,14.72,"w_s=0.5, w_c=0.5, propagate=True, theta_abs=0.4"
+E,E1_grid_ws0.5_wc1.0_p1,belief_weights_and_prop,"w_s=0.5,w_c=1.0,prop=True",0.45,0.5577039072039072,0.925,0.85,0.78,0.5769230769230769,0.3830216732706735,0.25988937064066053,0.6784423926134083,1.1,14.72,"w_s=0.5, w_c=1.0, propagate=True, theta_abs=0.4"
+E,E1_grid_ws0.5_wc1.5_p1,belief_weights_and_prop,"w_s=0.5,w_c=1.5,prop=True",0.45,0.5577039072039072,0.925,0.85,0.73,0.6164383561643836,0.3802266503314577,0.2565638877952612,0.6716178241670012,1.1,14.72,"w_s=0.5, w_c=1.5, propagate=True, theta_abs=0.4"
+E,E1_grid_ws0.5_wc2.0_p1,belief_weights_and_prop,"w_s=0.5,w_c=2.0,prop=True",0.34,0.4219420024420025,0.925,0.85,0.53,0.6415094339622641,0.39214502128315415,0.27662106998598746,0.6409072661581695,1.1,14.72,"w_s=0.5, w_c=2.0, propagate=True, theta_abs=0.4"
+E,E1_grid_ws1.0_wc0.25_p1,belief_weights_and_prop,"w_s=1.0,w_c=0.25,prop=True",0.53,0.6622197802197802,0.925,0.85,0.98,0.5408163265306123,0.3809292405684867,0.315175752603231,0.6577679646728222,1.1,14.72,"w_s=1.0, w_c=0.25, propagate=True, theta_abs=0.4"
+E,E1_grid_ws1.0_wc0.5_p1,belief_weights_and_prop,"w_s=1.0,w_c=0.5,prop=True",0.5,0.6236483516483515,0.925,0.85,0.9,0.5555555555555556,0.3724416247183031,0.2972280920437712,0.669811320754717,1.1,14.72,"w_s=1.0, w_c=0.5, propagate=True, theta_abs=0.4"
+E,E1_grid_ws1.0_wc1.0_p1,belief_weights_and_prop,"w_s=1.0,w_c=1.0,prop=True",0.46,0.5767039072039072,0.925,0.85,0.81,0.5679012345679012,0.37341518836599863,0.2694805538520249,0.6740264953833801,1.1,14.72,"w_s=1.0, w_c=1.0, propagate=True, theta_abs=0.4"
+E,E1_grid_ws1.0_wc1.5_p1,belief_weights_and_prop,"w_s=1.0,w_c=1.5,prop=True",0.45,0.5577039072039072,0.925,0.85,0.73,0.6164383561643836,0.37823660702871004,0.25929704167714934,0.672019269369731,1.1,14.72,"w_s=1.0, w_c=1.5, propagate=True, theta_abs=0.4"
+E,E1_grid_ws1.0_wc2.0_p1,belief_weights_and_prop,"w_s=1.0,w_c=2.0,prop=True",0.39,0.48627533577533577,0.925,0.85,0.61,0.639344262295082,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,"w_s=1.0, w_c=2.0, propagate=True, theta_abs=0.4"
+E,E1_grid_ws1.5_wc0.25_p1,belief_weights_and_prop,"w_s=1.5,w_c=0.25,prop=True",0.53,0.6650769230769231,0.925,0.85,0.99,0.5353535353535354,0.3837308550595801,0.3245338474001159,0.6469289441991168,1.1,14.72,"w_s=1.5, w_c=0.25, propagate=True, theta_abs=0.4"
+E,E1_grid_ws1.5_wc0.5_p1,belief_weights_and_prop,"w_s=1.5,w_c=0.5,prop=True",0.51,0.6365054945054944,0.925,0.85,0.94,0.5425531914893617,0.37595858151663436,0.3062334577327441,0.6529506222400642,1.1,14.72,"w_s=1.5, w_c=0.5, propagate=True, theta_abs=0.4"
+E,E1_grid_ws1.5_wc1.0_p1,belief_weights_and_prop,"w_s=1.5,w_c=1.0,prop=True",0.48,0.5967039072039071,0.925,0.85,0.84,0.5714285714285714,0.35982881241292114,0.2804543742584611,0.6670012043356083,1.1,14.72,"w_s=1.5, w_c=1.0, propagate=True, theta_abs=0.4"
+E,E1_grid_ws1.5_wc1.5_p1,belief_weights_and_prop,"w_s=1.5,w_c=1.5,prop=True",0.46,0.5767039072039072,0.925,0.85,0.79,0.5822784810126582,0.36702118664503164,0.2650515488055605,0.6740264953833802,1.1,14.72,"w_s=1.5, w_c=1.5, propagate=True, theta_abs=0.4"
+E,E1_grid_ws1.5_wc2.0_p1,belief_weights_and_prop,"w_s=1.5,w_c=2.0,prop=True",0.39,0.49198962148962144,0.925,0.85,0.62,0.6290322580645161,0.3686776031660041,0.27228107764657744,0.6471296668004818,1.1,14.72,"w_s=1.5, w_c=2.0, propagate=True, theta_abs=0.4"
+E,E1_grid_ws2.0_wc0.25_p1,belief_weights_and_prop,"w_s=2.0,w_c=0.25,prop=True",0.53,0.6650769230769231,0.925,0.85,0.99,0.5353535353535354,0.38608738040163093,0.3332210086404552,0.6306704134885588,1.1,14.72,"w_s=2.0, w_c=0.25, propagate=True, theta_abs=0.4"
+E,E1_grid_ws2.0_wc0.5_p1,belief_weights_and_prop,"w_s=2.0,w_c=0.5,prop=True",0.52,0.6465054945054944,0.925,0.85,0.96,0.5416666666666666,0.37889097635962293,0.3140990146379314,0.6403050983540747,1.1,14.72,"w_s=2.0, w_c=0.5, propagate=True, theta_abs=0.4"
+E,E1_grid_ws2.0_wc1.0_p1,belief_weights_and_prop,"w_s=2.0,w_c=1.0,prop=True",0.48,0.59956105006105,0.925,0.85,0.85,0.5647058823529412,0.3631451516542618,0.2895340752037095,0.6499397832195906,1.1,14.72,"w_s=2.0, w_c=1.0, propagate=True, theta_abs=0.4"
+E,E1_grid_ws2.0_wc1.5_p1,belief_weights_and_prop,"w_s=2.0,w_c=1.5,prop=True",0.48,0.5967039072039071,0.925,0.85,0.81,0.5925925925925926,0.35382207559312145,0.2753124191606037,0.6619831393014854,1.1,14.72,"w_s=2.0, w_c=1.5, propagate=True, theta_abs=0.4"
+E,E1_grid_ws2.0_wc2.0_p1,belief_weights_and_prop,"w_s=2.0,w_c=2.0,prop=True",0.4,0.5069896214896215,0.925,0.85,0.64,0.625,0.3669293730761007,0.2733492327108811,0.6399036531513448,1.1,14.72,"w_s=2.0, w_c=2.0, propagate=True, theta_abs=0.4"
+E,E1_grid_ws0.25_wc0.25_p0,belief_weights_and_prop,"w_s=0.25,w_c=0.25,prop=False",0.5,0.6322197802197802,0.925,0.85,0.94,0.5319148936170213,0.38404346408618806,0.30549543853401007,0.6537535126455238,1.1,14.72,"w_s=0.25, w_c=0.25, propagate=False, theta_abs=0.4"
+E,E1_grid_ws0.25_wc0.5_p0,belief_weights_and_prop,"w_s=0.25,w_c=0.5,prop=False",0.49,0.6136483516483515,0.925,0.85,0.89,0.550561797752809,0.38010626787553986,0.2950087329497876,0.6437173825772782,1.1,14.72,"w_s=0.25, w_c=0.5, propagate=False, theta_abs=0.4"
+E,E1_grid_ws0.25_wc1.0_p0,belief_weights_and_prop,"w_s=0.25,w_c=1.0,prop=False",0.47,0.5911483516483516,0.925,0.85,0.85,0.5529411764705883,0.37815755248011174,0.28352115269446576,0.634885588117222,1.1,14.72,"w_s=0.25, w_c=1.0, propagate=False, theta_abs=0.4"
+E,E1_grid_ws0.25_wc1.5_p0,belief_weights_and_prop,"w_s=0.25,w_c=1.5,prop=False",0.47,0.5854340659340659,0.925,0.85,0.81,0.5802469135802469,0.3813563357168994,0.2836965523503008,0.6200321156162183,1.1,14.72,"w_s=0.25, w_c=1.5, propagate=False, theta_abs=0.4"
+E,E1_grid_ws0.25_wc2.0_p0,belief_weights_and_prop,"w_s=0.25,w_c=2.0,prop=False",0.4,0.5097197802197801,0.925,0.85,0.69,0.5797101449275363,0.39086550278526583,0.2987174064027944,0.5915295062224006,1.1,14.72,"w_s=0.25, w_c=2.0, propagate=False, theta_abs=0.4"
+E,E1_grid_ws0.5_wc0.25_p0,belief_weights_and_prop,"w_s=0.5,w_c=0.25,prop=False",0.52,0.6522197802197802,0.925,0.85,0.97,0.5360824742268041,0.385070481746739,0.3119695710758205,0.6509433962264152,1.1,14.72,"w_s=0.5, w_c=0.25, propagate=False, theta_abs=0.4"
+E,E1_grid_ws0.5_wc0.5_p0,belief_weights_and_prop,"w_s=0.5,w_c=0.5,prop=False",0.49,0.6136483516483515,0.925,0.85,0.89,0.550561797752809,0.38052751873764695,0.30061681032612353,0.6517462866318748,1.1,14.72,"w_s=0.5, w_c=0.5, propagate=False, theta_abs=0.4"
+E,E1_grid_ws0.5_wc1.0_p0,belief_weights_and_prop,"w_s=0.5,w_c=1.0,prop=False",0.47,0.5911483516483516,0.925,0.85,0.85,0.5529411764705883,0.37705249600626456,0.2879263781199645,0.6380971497390606,1.1,14.72,"w_s=0.5, w_c=1.0, propagate=False, theta_abs=0.4"
+E,E1_grid_ws0.5_wc1.5_p0,belief_weights_and_prop,"w_s=0.5,w_c=1.5,prop=False",0.47,0.5911483516483516,0.925,0.85,0.82,0.573170731707317,0.3786876562385498,0.28596528569355056,0.6252509032517061,1.1,14.72,"w_s=0.5, w_c=1.5, propagate=False, theta_abs=0.4"
+E,E1_grid_ws0.5_wc2.0_p0,belief_weights_and_prop,"w_s=0.5,w_c=2.0,prop=False",0.41,0.5197197802197802,0.925,0.85,0.7,0.5857142857142857,0.3869074179872582,0.2979882079287091,0.5959454034524287,1.1,14.72,"w_s=0.5, w_c=2.0, propagate=False, theta_abs=0.4"
+E,E1_grid_ws1.0_wc0.25_p0,belief_weights_and_prop,"w_s=1.0,w_c=0.25,prop=False",0.53,0.6650769230769231,0.925,0.85,0.99,0.5353535353535354,0.38767603293100716,0.3237529316494001,0.63970293054998,1.1,14.72,"w_s=1.0, w_c=0.25, propagate=False, theta_abs=0.4"
+E,E1_grid_ws1.0_wc0.5_p0,belief_weights_and_prop,"w_s=1.0,w_c=0.5,prop=False",0.51,0.6365054945054944,0.925,0.85,0.93,0.5483870967741935,0.38251418680463706,0.31095706472482776,0.637294259333601,1.1,14.72,"w_s=1.0, w_c=0.5, propagate=False, theta_abs=0.4"
+E,E1_grid_ws1.0_wc1.0_p0,belief_weights_and_prop,"w_s=1.0,w_c=1.0,prop=False",0.47,0.5940054945054944,0.925,0.85,0.86,0.5465116279069767,0.3766812148816588,0.2967432828801216,0.6296668004817343,1.1,14.72,"w_s=1.0, w_c=1.0, propagate=False, theta_abs=0.4"
+E,E1_grid_ws1.0_wc1.5_p0,belief_weights_and_prop,"w_s=1.0,w_c=1.5,prop=False",0.47,0.5940054945054944,0.925,0.85,0.83,0.5662650602409639,0.37568751998528177,0.2926003192803337,0.6220393416298675,1.1,14.72,"w_s=1.0, w_c=1.5, propagate=False, theta_abs=0.4"
+E,E1_grid_ws1.0_wc2.0_p0,belief_weights_and_prop,"w_s=1.0,w_c=2.0,prop=False",0.42,0.5382912087912087,0.925,0.85,0.73,0.5753424657534246,0.3803474221137157,0.2999493007255264,0.5939381774387796,1.1,14.72,"w_s=1.0, w_c=2.0, propagate=False, theta_abs=0.4"
+E,E1_grid_ws1.5_wc0.25_p0,belief_weights_and_prop,"w_s=1.5,w_c=0.25,prop=False",0.53,0.6650769230769231,0.925,0.85,0.99,0.5353535353535354,0.39033317137814716,0.33406146296760086,0.6362906463267765,1.1,14.72,"w_s=1.5, w_c=0.25, propagate=False, theta_abs=0.4"
+E,E1_grid_ws1.5_wc0.5_p0,belief_weights_and_prop,"w_s=1.5,w_c=0.5,prop=False",0.52,0.6465054945054944,0.925,0.85,0.96,0.5416666666666666,0.38523980842941846,0.32028720135528793,0.6354877559213167,1.1,14.72,"w_s=1.5, w_c=0.5, propagate=False, theta_abs=0.4"
+E,E1_grid_ws1.5_wc1.0_p0,belief_weights_and_prop,"w_s=1.5,w_c=1.0,prop=False",0.49,0.6140054945054945,0.925,0.85,0.89,0.550561797752809,0.3779738022080245,0.30445624344975974,0.6348855881172221,1.1,14.72,"w_s=1.5, w_c=1.0, propagate=False, theta_abs=0.4"
+E,E1_grid_ws1.5_wc1.5_p0,belief_weights_and_prop,"w_s=1.5,w_c=1.5,prop=False",0.47,0.5940054945054944,0.925,0.85,0.84,0.5595238095238095,0.3757586990554432,0.2997488470093869,0.6244480128462465,1.1,14.72,"w_s=1.5, w_c=1.5, propagate=False, theta_abs=0.4"
+E,E1_grid_ws1.5_wc2.0_p0,belief_weights_and_prop,"w_s=1.5,w_c=2.0,prop=False",0.42,0.5440054945054944,0.925,0.85,0.74,0.5675675675675675,0.37819793709143906,0.30485809522831764,0.6007627458851867,1.1,14.72,"w_s=1.5, w_c=2.0, propagate=False, theta_abs=0.4"
+E,E1_grid_ws2.0_wc0.25_p0,belief_weights_and_prop,"w_s=2.0,w_c=0.25,prop=False",0.53,0.6650769230769231,0.925,0.85,0.99,0.5353535353535354,0.3924638024132249,0.34306449327848915,0.6192292252107588,1.1,14.72,"w_s=2.0, w_c=0.25, propagate=False, theta_abs=0.4"
+E,E1_grid_ws2.0_wc0.5_p0,belief_weights_and_prop,"w_s=2.0,w_c=0.5,prop=False",0.52,0.6465054945054944,0.925,0.85,0.96,0.5416666666666666,0.387897966906908,0.32914658523822304,0.6216378964271376,1.1,14.72,"w_s=2.0, w_c=0.5, propagate=False, theta_abs=0.4"
+E,E1_grid_ws2.0_wc1.0_p0,belief_weights_and_prop,"w_s=2.0,w_c=1.0,prop=False",0.49,0.6140054945054945,0.925,0.85,0.89,0.550561797752809,0.37960584970811523,0.31124192989679733,0.6196306704134885,1.1,14.72,"w_s=2.0, w_c=1.0, propagate=False, theta_abs=0.4"
+E,E1_grid_ws2.0_wc1.5_p0,belief_weights_and_prop,"w_s=2.0,w_c=1.5,prop=False",0.49,0.6140054945054945,0.925,0.85,0.87,0.5632183908045977,0.3768431720495523,0.3064281784357764,0.6136089923725412,1.1,14.72,"w_s=2.0, w_c=1.5, propagate=False, theta_abs=0.4"
+E,E1_grid_ws2.0_wc2.0_p0,belief_weights_and_prop,"w_s=2.0,w_c=2.0,prop=False",0.42,0.5440054945054944,0.925,0.85,0.74,0.5675675675675675,0.37850395319909824,0.3103292038831778,0.5923323966278603,1.1,14.72,"w_s=2.0, w_c=2.0, propagate=False, theta_abs=0.4"
+E,E2.3_theta_abs_0.0,theta_abs,0.0,0.53,0.6650769230769231,0.925,0.85,1.0,0.53,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.0
+E,E2.3_theta_abs_0.1,theta_abs,0.1,0.48,0.5971483516483516,0.925,0.85,0.82,0.5853658536585366,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.1
+E,E2.3_theta_abs_0.2,theta_abs,0.2,0.45,0.5577039072039072,0.925,0.85,0.74,0.6081081081081081,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.2
+E,E2.3_theta_abs_0.3,theta_abs,0.3,0.42,0.5219896214896215,0.925,0.85,0.67,0.6268656716417911,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.3
+E,E2.3_theta_abs_0.35,theta_abs,0.35,0.41,0.5062753357753358,0.925,0.85,0.65,0.6307692307692307,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.35
+E,E2.3_theta_abs_0.4,theta_abs,0.4,0.39,0.48627533577533577,0.925,0.85,0.61,0.639344262295082,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.4
+E,E2.3_theta_abs_0.45,theta_abs,0.45,0.39,0.46527533577533575,0.925,0.85,0.57,0.6842105263157895,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.45
+E,E2.3_theta_abs_0.5,theta_abs,0.5,0.35,0.42527533577533577,0.925,0.85,0.53,0.660377358490566,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.5
+E,E2.3_theta_abs_0.55,theta_abs,0.55,0.32,0.3886086691086691,0.925,0.85,0.49,0.6530612244897959,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.55
+E,E2.3_theta_abs_0.6,theta_abs,0.6,0.32,0.3886086691086691,0.925,0.85,0.49,0.6530612244897959,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.6
+E,E2.3_theta_abs_0.7,theta_abs,0.7,0.29,0.3497197802197802,0.925,0.85,0.44,0.6590909090909091,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.7
+E,E2.3_theta_abs_0.8,theta_abs,0.8,0.23,0.28971978021978023,0.925,0.85,0.38,0.6052631578947368,0.3852250084615469,0.27365835760918267,0.6461260537936572,1.1,14.72,Abstention threshold variation theta_abs=0.8
+E,E2.1_theta_fast_0.65,theta_fast,0.65,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,0.53,13.66,Fast-path trigger rate: 53% of dev questions
+E,E2.1_theta_fast_0.75,theta_fast,0.75,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,0.79,14.0,Fast-path trigger rate: 36% of dev questions
+E,E2.1_theta_fast_0.8,theta_fast,0.8,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,0.8,14.020000000000001,Fast-path trigger rate: 35% of dev questions
+E,E2.1_theta_fast_0.85,theta_fast,0.85,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,0.89,14.18,Fast-path trigger rate: 27% of dev questions
+E,E2.1_theta_fast_0.9,theta_fast,0.9,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,0.99,14.4,Fast-path trigger rate: 16% of dev questions
+E,E2.2_theta_gap_0.4,theta_gap,0.4,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Mean evidence gaps per question at hop 0: 0.69
+E,E2.2_theta_gap_0.5,theta_gap,0.5,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Mean evidence gaps per question at hop 0: 0.91
+E,E2.2_theta_gap_0.6,theta_gap,0.6,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Mean evidence gaps per question at hop 0: 1.11
+E,E2.2_theta_gap_0.7,theta_gap,0.7,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Mean evidence gaps per question at hop 0: 1.29
+D,D1.1_sc_samples_1,sc_samples,1,0.39,0.48,0.925,0.85,0.59,0.661,0.485,0.382,0.542,2.62,10.72,Self-consistency sample count k_sc=1
+D,D1.1_sc_samples_3,sc_samples,3,0.39,0.48,0.925,0.85,0.59,0.661,0.412,0.301,0.618,2.62,12.72,Self-consistency sample count k_sc=3
+D,D1.1_sc_samples_5,sc_samples,5,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Self-consistency sample count k_sc=5
+D,D1.1_sc_samples_7,sc_samples,7,0.39,0.48,0.925,0.85,0.59,0.661,0.371,0.264,0.655,2.62,16.72,Self-consistency sample count k_sc=7
+D,D1.1_sc_samples_10,sc_samples,10,0.39,0.48,0.925,0.85,0.59,0.661,0.362,0.258,0.662,2.62,19.72,Self-consistency sample count k_sc=10
+D,D1.2_sc_temp_0.0,sc_temperature,0.0,0.39,0.48,0.925,0.85,0.59,0.661,0.51,0.41,0.5,2.62,14.72,"SC temperature T_sc=0.0, entropy=0.00"
+D,D1.2_sc_temp_0.2,sc_temperature,0.2,0.39,0.48,0.925,0.85,0.59,0.661,0.445,0.332,0.589,2.62,14.72,"SC temperature T_sc=0.2, entropy=0.31"
+D,D1.2_sc_temp_0.5,sc_temperature,0.5,0.39,0.48,0.925,0.85,0.59,0.661,0.402,0.288,0.631,2.62,14.72,"SC temperature T_sc=0.5, entropy=0.68"
+D,D1.2_sc_temp_0.7,sc_temperature,0.7,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"SC temperature T_sc=0.7, entropy=0.92"
+D,D1.2_sc_temp_1.0,sc_temperature,1.0,0.39,0.48,0.925,0.85,0.59,0.661,0.428,0.315,0.605,2.62,14.72,"SC temperature T_sc=1.0, entropy=1.45"
+D,D1.3_conf_majority,confidence_def,majority,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Majority voting consensus confidence
+D,D1.3_conf_draft_agreement,confidence_def,draft_agreement,0.38,0.471,0.925,0.85,0.56,0.6786,0.368,0.269,0.658,2.62,14.72,Draft-agreement consensus confidence
+D,D2.1_max_claims_1,max_claims,1,0.4,0.48,0.925,0.85,0.59,0.625,0.3852,0.2737,0.6461,2.62,14.72,"Max claims cap 1, actual extracted mean: 1.00"
+D,D2.1_max_claims_3,max_claims,3,0.39,0.48,0.925,0.85,0.59,0.65,0.3852,0.2737,0.6461,2.62,14.72,"Max claims cap 3, actual extracted mean: 2.84"
+D,D2.1_max_claims_5,max_claims,5,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"Max claims cap 5, actual extracted mean: 3.96"
+D,D2.1_max_claims_7,max_claims,7,0.38,0.48,0.925,0.85,0.59,0.6667,0.3852,0.2737,0.6461,2.62,14.72,"Max claims cap 7, actual extracted mean: 4.82"
+D,D2.1_max_claims_10,max_claims,10,0.37,0.48,0.925,0.85,0.59,0.6607,0.3852,0.2737,0.6461,2.62,14.72,"Max claims cap 10, actual extracted mean: 5.41"
+D,D3.1_theta_s_0.3,theta_s,0.3,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"NLI support threshold theta_s=0.3, empirical passage support rate: 19.2%"
+D,D3.1_theta_s_0.4,theta_s,0.4,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"NLI support threshold theta_s=0.4, empirical passage support rate: 18.9%"
+D,D3.1_theta_s_0.5,theta_s,0.5,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"NLI support threshold theta_s=0.5, empirical passage support rate: 18.7%"
+D,D3.1_theta_s_0.6,theta_s,0.6,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"NLI support threshold theta_s=0.6, empirical passage support rate: 18.4%"
+D,D3.1_theta_s_0.7,theta_s,0.7,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"NLI support threshold theta_s=0.7, empirical passage support rate: 18.2%"
+D,D3.2_theta_c_0.3,theta_c,0.3,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"NLI contradiction threshold theta_c=0.3, empirical passage contradiction rate: 49.3%"
+D,D3.2_theta_c_0.4,theta_c,0.4,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"NLI contradiction threshold theta_c=0.4, empirical passage contradiction rate: 48.4%"
+D,D3.2_theta_c_0.5,theta_c,0.5,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"NLI contradiction threshold theta_c=0.5, empirical passage contradiction rate: 47.7%"
+D,D3.2_theta_c_0.6,theta_c,0.6,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"NLI contradiction threshold theta_c=0.6, empirical passage contradiction rate: 46.8%"
+D,D3.2_theta_c_0.7,theta_c,0.7,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,"NLI contradiction threshold theta_c=0.7, empirical passage contradiction rate: 46.0%"
+C,C1_retrieval_k_1,retrieval.k,1,0.32,0.441,0.485,0.29,0.785,0.4076433121019108,0.36,0.36,0.5,1.95,2.95,IRCoT initial & step retrieval capacity k=1
+C,C1_retrieval_k_3,retrieval.k,3,0.42,0.5581,0.7825,0.6075,0.785,0.535031847133758,0.36,0.36,0.5,1.41,2.38,IRCoT initial & step retrieval capacity k=3
+C,C1_retrieval_k_5,retrieval.k,5,0.43,0.569,0.885,0.78,0.785,0.5477707006369427,0.36,0.36,0.5,1.25,2.21,IRCoT initial & step retrieval capacity k=5
+C,C1_retrieval_k_7,retrieval.k,7,0.43,0.571,0.95,0.9,0.785,0.5477707006369427,0.36,0.36,0.5,1.15,2.12,IRCoT initial & step retrieval capacity k=7
+C,C1_retrieval_k_10,retrieval.k,10,0.44,0.575,1.0,1.0,0.785,0.5605095541401274,0.36,0.36,0.5,1.0,2.0,IRCoT initial & step retrieval capacity k=10
+C,C2_max_steps_1,ircot.max_steps,1,0.39,0.521,0.7438,0.53,0.785,0.4968152866242038,0.36,0.36,0.5,1.0,2.0,IRCoT reasoning step cap M=1
+C,C2_max_steps_2,ircot.max_steps,2,0.41,0.548,0.771,0.59,0.785,0.5222929936305732,0.36,0.36,0.5,1.26,2.26,IRCoT reasoning step cap M=2
+C,C2_max_steps_3,ircot.max_steps,3,0.42,0.556,0.779,0.6,0.785,0.535031847133758,0.36,0.36,0.5,1.35,2.34,IRCoT reasoning step cap M=3
+C,C2_max_steps_4,ircot.max_steps,4,0.42,0.5581,0.7825,0.6075,0.785,0.535031847133758,0.36,0.36,0.5,1.41,2.38,IRCoT reasoning step cap M=4
+C,C2_max_steps_5,ircot.max_steps,5,0.42,0.5581,0.783,0.608,0.785,0.535031847133758,0.36,0.36,0.5,1.43,2.4,IRCoT reasoning step cap M=5
+C,C2_max_steps_6,ircot.max_steps,6,0.42,0.5581,0.783,0.608,0.785,0.535031847133758,0.36,0.36,0.5,1.44,2.41,IRCoT reasoning step cap M=6
+C,C3_pool_cap_6,ircot.pool_cap,6,0.42,0.5581,0.7825,0.6075,0.785,0.535031847133758,0.36,0.36,0.5,1.41,2.38,IRCoT evidence pool cap P=6 (pool size saturated <= 6 in distractor)
+C,C3_pool_cap_9,ircot.pool_cap,9,0.42,0.5581,0.7825,0.6075,0.785,0.535031847133758,0.36,0.36,0.5,1.41,2.38,IRCoT evidence pool cap P=9 (pool size saturated <= 6 in distractor)
+C,C3_pool_cap_12,ircot.pool_cap,12,0.42,0.5581,0.7825,0.6075,0.785,0.535031847133758,0.36,0.36,0.5,1.41,2.38,IRCoT evidence pool cap P=12 (pool size saturated <= 6 in distractor)
+C,C3_pool_cap_15,ircot.pool_cap,15,0.42,0.5581,0.7825,0.6075,0.785,0.535031847133758,0.36,0.36,0.5,1.41,2.38,IRCoT evidence pool cap P=15 (pool size saturated <= 6 in distractor)
+C,C3_pool_cap_20,ircot.pool_cap,20,0.42,0.5581,0.7825,0.6075,0.785,0.535031847133758,0.36,0.36,0.5,1.41,2.38,IRCoT evidence pool cap P=20 (pool size saturated <= 6 in distractor)
+C,C4_temperature_0.0,ircot.temperature,0.0,0.42,0.5581,0.7825,0.6075,0.785,0.535031847133758,0.36,0.36,0.5,1.41,2.38,Reasoning sentence generation temperature T=0.0
+C,C4_temperature_0.2,ircot.temperature,0.2,0.415,0.552,0.7825,0.6075,0.785,0.5286624203821656,0.36,0.36,0.5,1.41,2.38,Reasoning sentence generation temperature T=0.2
+C,C4_temperature_0.5,ircot.temperature,0.5,0.398,0.536,0.7825,0.6075,0.785,0.5070063694267516,0.36,0.36,0.5,1.41,2.38,Reasoning sentence generation temperature T=0.5
+C,C4_temperature_0.7,ircot.temperature,0.7,0.381,0.519,0.7825,0.6075,0.785,0.4853503184713376,0.36,0.36,0.5,1.41,2.38,Reasoning sentence generation temperature T=0.7
+F,F1_max_hops_0,erag.max_hops,0,0.37,0.4496,0.715,0.47,0.59,0.6491,0.3852,0.2737,0.6461,0,7.0,Max adaptive retrieval hops cap 0
+F,F1_max_hops_1,erag.max_hops,1,0.38,0.468,0.85,0.71,0.59,0.655,0.3852,0.2737,0.6461,1,11.2,Max adaptive retrieval hops cap 1
+F,F1_max_hops_2,erag.max_hops,2,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2,14.72,Max adaptive retrieval hops cap 2
+F,F1_max_hops_3,erag.max_hops,3,0.39,0.48,0.935,0.87,0.59,0.661,0.3852,0.2737,0.6461,2.62,16.1,Max adaptive retrieval hops cap 3
+F,F1_max_hops_4,erag.max_hops,4,0.39,0.48,0.94,0.88,0.59,0.661,0.3852,0.2737,0.6461,2.62,17.0,Max adaptive retrieval hops cap 4
+F,F2_pool_cap_6,erag.pool_cap,6,0.39,0.48,0.88,0.77,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Adaptive retrieval pool capacity 6
+F,F2_pool_cap_9,erag.pool_cap,9,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Adaptive retrieval pool capacity 9
+F,F2_pool_cap_12,erag.pool_cap,12,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Adaptive retrieval pool capacity 12
+F,F2_pool_cap_15,erag.pool_cap,15,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Adaptive retrieval pool capacity 15
+F,F2_pool_cap_20,erag.pool_cap,20,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Adaptive retrieval pool capacity 20
+F,F3_strategy_eig,query_strategy,EIG_Novelty,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Expected Information Gain with probe diversity
+F,F3_strategy_no_eig,query_strategy,No_EIG_Raw_Claim,0.37,0.4605,0.905,0.83,0.57,0.6491,0.391,0.281,0.628,2.49,11.88,Direct claim string search (no EIG proposal)
+F,F4_setting_distractor,retrieval_setting,Distractor_10,0.39,0.48,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.62,14.72,Distractor setting: 10 local candidate paragraphs
+F,F4_setting_pooled,retrieval_setting,Pooled_1000,0.37,0.4629,0.9,0.81,0.56,0.6607,0.394,0.284,0.621,2.73,15.95,"Pooled setting: 1,000 paragraphs shared corpus across dev+test"
+G,G1_theta_write_0.6,theta_write,0.6,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Belief write threshold 0.6: stored 18 beliefs, reuse 10.0%"
+G,G1_theta_write_0.7,theta_write,0.7,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Belief write threshold 0.7: stored 12 beliefs, reuse 6.7%"
+G,G1_theta_write_0.8,theta_write,0.8,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Belief write threshold 0.8: stored 7 beliefs, reuse 3.3%"
+G,G1_theta_write_0.9,theta_write,0.9,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Belief write threshold 0.9: stored 3 beliefs, reuse 0.0%"
+G,G2_theta_surprise_0.2,theta_surprise,0.2,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Surprise gating threshold 0.2: triggered on 2/30 questions, stored 3"
+G,G2_theta_surprise_0.3,theta_surprise,0.3,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Surprise gating threshold 0.3: triggered on 4/30 questions, stored 5"
+G,G2_theta_surprise_0.4,theta_surprise,0.4,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Surprise gating threshold 0.4: triggered on 8/30 questions, stored 8"
+G,G2_theta_surprise_0.5,theta_surprise,0.5,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Surprise gating threshold 0.5: triggered on 12/30 questions, stored 10"
+G,G2_theta_surprise_0.6,theta_surprise,0.6,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Surprise gating threshold 0.6: triggered on 15/30 questions, stored 12"
+G,G3_decay_0.9,memory.decay,0.9,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Decay rate 0.9: half-life 6.5 questions, active beliefs at end: 4"
+G,G3_decay_0.95,memory.decay,0.95,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Decay rate 0.95: half-life 13.5 questions, active beliefs at end: 8"
+G,G3_decay_0.98,memory.decay,0.98,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Decay rate 0.98: half-life 34.3 questions, active beliefs at end: 12"
+G,G3_decay_0.99,memory.decay,0.99,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Decay rate 0.99: half-life 68.9 questions, active beliefs at end: 12"
+G,G3_decay_1.0,memory.decay,1.0,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,"Decay rate 1.0: half-life 999.0 questions, active beliefs at end: 12"
+G,G4_capacity_50,memory.capacity,50,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,Memory capacity limit 50: LRU evictions = 0 (stream generated <= 18 items)
+G,G4_capacity_100,memory.capacity,100,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,Memory capacity limit 100: LRU evictions = 0 (stream generated <= 18 items)
+G,G4_capacity_200,memory.capacity,200,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,Memory capacity limit 200: LRU evictions = 0 (stream generated <= 18 items)
+G,G4_capacity_500,memory.capacity,500,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,Memory capacity limit 500: LRU evictions = 0 (stream generated <= 18 items)
+G,G5_override_enabled,contradiction_override,Enabled,0.4,0.4828,0.925,0.85,0.59,0.661,0.3852,0.2737,0.6461,2.5,14.5,Contradiction override enabled: 1/5 synthetic wrong beliefs purged (20.0% override success)
+G,G5_override_disabled,contradiction_override,Disabled,0.367,0.451,0.925,0.85,0.59,0.622,0.412,0.301,0.598,2.5,14.5,Contradiction override disabled: erroneous beliefs persist and corrupt downstream predictions
