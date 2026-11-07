@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 from src.epistemic.belief_graph import BeliefGraph
 from src.epistemic.claims import extract_claims
 from src.epistemic.confidence import self_consistency
+from src.eval.metrics import normalize_answer
 from src.llm.client import Tracker
 from src.llm.prompts import answer_messages
 
@@ -49,6 +50,7 @@ def build_graph(
     w_s = e.get("w_s", 1.0)
     w_c = e.get("w_c", 2.0)
     propagate = "no_prop" not in ablate
+    pre_filter = n.get("pre_filter", False)
 
     g = BeliefGraph(w_s=w_s, w_c=w_c, propagate=propagate)
     for c in claims:
@@ -57,7 +59,7 @@ def build_graph(
         else:
             theta_s = n.get("theta_s", 0.5)
             theta_c = n.get("theta_c", 0.5)
-            ev = nli.verify(c["text"], passages, theta_s=theta_s, theta_c=theta_c)
+            ev = nli.verify(c["text"], passages, theta_s=theta_s, theta_c=theta_c, pre_filter=pre_filter)
         g.add(c["text"], c["answer_bearing"], c["depends_on"], c0, ev)
     return g.update()
 
@@ -70,10 +72,12 @@ def targeted_retrieve(
     k: int,
     ablate: set,
     tracker: Tracker,
+    eig_strategy: str = "llm",
+    saturation_precheck: bool = False,
 ) -> List[Dict[str, Any]]:
     """Select next evidence using EIG-inspired uncertainty reduction x pool novelty."""
     seen = {p["title"] for p in pool}
-    if "no_eig" in ablate:
+    if "no_eig" in ablate or eig_strategy == "direct":
         queries = [claim.text]
     else:
         proposed = propose_queries(llm, claim.text, tracker, n=3)
@@ -89,7 +93,8 @@ def targeted_retrieve(
             best, best_score = res, score
 
     tracker.retrievals += 1
-    return [r for r in best if r["title"] not in seen]
+    new_passages = [r for r in best if r["title"] not in seen]
+    return new_passages
 
 
 def run_erag(
@@ -109,6 +114,12 @@ def run_erag(
     active = e.get("mode", "active") == "active"
     use_status = "no_nli" not in ablate
 
+    # Phase 2 Optimization Controls (Defaulting strictly to Reference Baseline)
+    claim_strategy = e.get("claim_strategy", "full_reextract") # full_reextract | incremental | single_atomic
+    post_hop_resample = e.get("post_hop_resample", "always")    # always | conditional | never
+    eig_strategy = e.get("eig_strategy", "llm")                 # llm | direct
+    saturation_precheck = e.get("saturation_precheck", False)
+
     # Step 1: Initial retrieval
     pool = retriever.search(q, k=k)
     tracker.retrievals += 1
@@ -118,9 +129,14 @@ def run_erag(
         mem_passages, mem_events = memory.read(q, pool, nli, cfg)
 
     hop, c0, trace, seen_contra = 0, None, [], False
+    initial_draft = None
+    prev_claims = None
+
     while True:
         # Step 2: Generation of draft answer
         draft = llm.chat(answer_messages(q, pool), tracker, temperature=0.0)
+        if hop == 0:
+            initial_draft = draft
 
         # Step 3: Self-consistency confidence estimation
         if c0 is None:
@@ -139,7 +155,19 @@ def run_erag(
                 c0 = conf_value(sc, cfg)
 
         # Step 4, 5, 6, 7: Claim decomposition, NLI verification, belief graph update & propagation
-        claims = extract_claims(llm, q, draft, pool, tracker, max_claims=e.get("max_claims", 5))
+        if claim_strategy == "single_atomic":
+            claims = [{
+                "text": f'The answer to "{q}" is {draft}.',
+                "answer_bearing": True,
+                "depends_on": [],
+                "fallback": False,
+            }]
+        elif claim_strategy == "incremental" and hop > 0 and normalize_answer(draft) == normalize_answer(initial_draft) and prev_claims:
+            claims = prev_claims
+        else:
+            claims = extract_claims(llm, q, draft, pool, tracker, max_claims=e.get("max_claims", 5))
+            prev_claims = claims
+
         graph = build_graph(claims, pool + mem_passages, nli, c0, cfg, ablate)
         gaps = graph.gaps(e.get("theta_gap", 0.6), use_status=use_status)
         seen_contra |= any(c.status == "contradicted" for c in graph.claims)
@@ -165,8 +193,15 @@ def run_erag(
         else:
             break  # Fast Path: all claims sufficiently supported
 
+        # Saturation check: if pool has reached capacity, further retrieval cannot expand context
+        if saturation_precheck and len(pool) >= e.get("pool_cap", 12):
+            break
+
         # Step 10 & 11: EIG-inspired query selection and adaptive retrieval
-        new = targeted_retrieve(llm, retriever, target, pool, k, ablate, tracker)
+        new = targeted_retrieve(
+            llm, retriever, target, pool, k, ablate, tracker,
+            eig_strategy=eig_strategy, saturation_precheck=saturation_precheck
+        )
         if not new:
             break
         pool = (pool + new)[: e.get("pool_cap", 12)]
@@ -174,16 +209,20 @@ def run_erag(
 
     final_conf = c0
     if hop > 0:
-        if "no_conf" in ablate:
-            final_conf = 1.0
+        if "no_conf" in ablate or post_hop_resample == "never":
+            final_conf = 1.0 if "no_conf" in ablate else c0
+        elif post_hop_resample == "conditional" and normalize_answer(draft) == normalize_answer(initial_draft):
+            # Answer unchanged despite new evidence: retain prior consensus c0
+            final_conf = c0
         else:
+            k_post = e.get("sc_samples_post_hop") or e.get("sc_samples", 5)
             sc = self_consistency(
                 llm,
                 q,
                 pool,
                 draft,
                 tracker,
-                k=e.get("sc_samples", 5),
+                k=k_post,
                 temperature=e.get("sc_temperature", 0.7),
             )
             final_conf = conf_value(sc, cfg)

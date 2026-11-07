@@ -145,6 +145,7 @@ class NLI:
         passages: List[Dict[str, Any]],
         theta_s: float = 0.5,
         theta_c: float = 0.5,
+        pre_filter: bool = False,
     ) -> Dict[str, Any]:
         """Classify relationship between claim and evidence passages: supported, contradicted, or unresolved."""
         sup: List[Tuple[str, float]] = []
@@ -152,16 +153,8 @@ class NLI:
         ents = self._extract_subject_entities(claim)
 
         for p in passages:
-            e, c = self.best(claim, p)
-            w = float(p.get("weight", 1.0))
-            e, c = e * w, c * w
             title = p.get("title", "unknown")
             base_title = re.sub(r'\s*\([^)]*\)', '', title).strip().lower()
-            if e >= theta_s:
-                sup.append((title, e))
-
-            # Contradiction requires that passage actually discusses the subject entity of the claim.
-            # Topic-disjoint passages with different entities produce spurious cross-encoder contradictions.
             p_text = (
                 title + " " + (" ".join(p.get("sentences", [])) if isinstance(p.get("sentences"), list) else p.get("text", ""))
             ).lower()
@@ -176,6 +169,17 @@ class NLI:
             else:
                 subj_tokens = [w.lower() for w in re.findall(r"\b[a-zA-Z]{3,}\b", claim) if w.lower() not in {"the", "and", "was", "were", "are", "for", "with"}]
                 mentions_subject = any(re.search(rf"\b{re.escape(tok)}\b", p_text) for tok in subj_tokens) if subj_tokens else True
+
+            # Pre-inference filter: skip expensive cross-encoder scoring on topic-disjoint passages
+            if pre_filter and not mentions_subject:
+                continue
+
+            e, c = self.best(claim, p)
+            w = float(p.get("weight", 1.0))
+            e, c = e * w, c * w
+
+            if e >= theta_s:
+                sup.append((title, e))
 
             if c >= theta_c and mentions_subject:
                 con.append((title, c))
