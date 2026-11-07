@@ -1,0 +1,7 @@
+system,mean_llm_calls,mean_in_tokens,mean_out_tokens,mean_total_tokens,cost_per_1k_usd
+Closed-Book LLM,1.0,120.0,184.7,304.7,0.0489
+Standard RAG,1.0,480.0,59.1,539.0,0.0598
+IRCoT Baseline,2.51,1353.2,169.3,1522.5,0.1692
+E-RAG-Reference,14.22,8084.1,997.5,9081.6,1.0079
+E-RAG-Balanced,8.56,4288.9,626.6,4915.5,0.5542
+E-RAG-Cost,3.41,1703.6,193.5,1897.2,0.2091
