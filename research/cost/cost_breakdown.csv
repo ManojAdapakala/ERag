@@ -1,0 +1,6 @@
+System,Mean LLM Calls / Q,Mean In Tokens / Q,Mean Out Tokens / Q,Mean Total Tokens / Q,Cost / Question (Standard 20B) [$],Cost / 1K Questions (Standard 20B) [$],Cost / Question (Low Tier 8B) [$],Cost / 1K Questions (Low Tier 8B) [$],Cost / Question (High Tier 70B) [$],Cost / 1K Questions (High Tier 70B) [$],Cost Ratio vs Standard RAG,Cost Ratio vs IRCoT
+Closed-Book,1.0,120.0,184.7,304.7,$0.000049,$0.0489,$0.000024,$0.0244,$0.000217,$0.2167,0.82x,0.29x
+Standard RAG,1.0,480.0,59.1,539.0,$0.000060,$0.0598,$0.000043,$0.0431,$0.000330,$0.3298,1.00x,0.35x
+IRCoT,2.51,1353.2,169.3,1522.5,$0.000169,$0.1692,$0.000122,$0.1218,$0.000932,$0.9321,2.83x,1.00x
+E-RAG Observe,7.0,3433.4,498.4,3931.8,$0.000443,$0.4430,$0.000315,$0.3145,$0.002419,$2.4194,7.41x,2.62x
+E-RAG Active,14.22,8084.1,997.5,9081.6,$0.001008,$1.0079,$0.000727,$0.7265,$0.005558,$5.5576,16.85x,5.96x

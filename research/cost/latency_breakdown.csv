@@ -1,0 +1,10 @@
+Component,Execution Engine,Mean Latency (ms),Median Latency (ms),P90 Latency (ms),Percent of Total Runtime,Scales With
+Initial Dense Retrieval,FAISS IndexFlatIP (MiniLM),780.05,737.7,982.63,29.0,Number of initial paragraphs (10) and embedding memo hit rate
+Subsequent Adaptive Retrieval,FAISS IndexFlatIP (MiniLM),120.24,121.13,202.03,4.5,Number of adaptive hops (0 to 2) and probe candidate queries
+LLM Draft Generation,Groq API (openai/gpt-oss-20b),29.55,1.01,26.89,1.1,Context length and Groq hosted endpoint latency
+Self-Consistency Consensus Sampling,Groq API (openai/gpt-oss-20b),6.76,1.73,14.38,0.3,Sample count k (k=5) and SQLite cache hit rate
+Claim Decomposition & Parsing,Groq API (openai/gpt-oss-20b),37.08,1.26,14.1,1.4,Structured JSON output length and answer complexity
+NLI Evidence Verification,PyTorch CPU (DeBERTa-v3 cross-encoder),1605.92,0.5,268.11,59.7,Number of claim-passage pairs (mean 32.5 pairs) on CPU
+Belief Graph Logit Update & Propagation,Pure Python (NumPy / Math),4.0,3.43,6.78,0.1,Number of claims (<=5) and backward dependency edges
+EIG Query Candidate Generation,Groq API (openai/gpt-oss-20b),107.24,0.67,10.2,4.0,Number of adaptive hops requiring candidate queries
+Total End-to-End Latency,Full Hybrid Pipeline,2690.91,895.57,2529.99,100.0,Overall multi-hop pipeline depth

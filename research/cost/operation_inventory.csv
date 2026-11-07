@@ -1,0 +1,11 @@
+Operation,Execution Location,Model,Temperature,Max Tokens,Mean Invocations / Q,Total Invocations (Test-400),Avg In Tokens,Avg Out Tokens,Total Tokens / Op,Deterministic Caching Valid,Purpose
+Initial Draft Generation,Remote Groq API,openai/gpt-oss-20b,0.0,1024,1.0,400,480.0,59.1,539.1,True,Produce initial context-grounded answer draft from initial 3 retrieved paragraphs
+Self-Consistency Sampling (Hop 0),Remote Groq API,openai/gpt-oss-20b,0.7,1024,5.0,2000,480.0,58.5,538.5,True,Sample k=5 answer candidates at T=0.7 to compute consensus confidence c0
+Claim Decomposition & DAG Extraction,Remote Groq API,openai/gpt-oss-20b,0.0,1024,2.0725,829,745.2,118.4,863.6,True,Decompose draft answer and context into up to 5 atomic factual claims with DAG dependency indices
+EIG Candidate Query Generation,Remote Groq API,openai/gpt-oss-20b,0.0,200,1.46,584,152.0,44.8,196.8,True,Generate 3 targeted search query variations targeting the weakest unresolved claim
+Subsequent Draft Generation (Post-Retrieval),Remote Groq API,openai/gpt-oss-20b,0.0,1024,1.0725,429,890.5,61.2,951.7,True,Regenerate answer draft conditioned on expanded evidence pool (up to 12 paragraphs)
+Post-Hop Self-Consistency Resampling,Remote Groq API,openai/gpt-oss-20b,0.7,1024,3.6125,1445,890.5,60.8,951.3,True,Resample k=5 completions to update confidence c0 after adaptive retrieval added new evidence
+NLI Evidence Verification,Local CPU Inference,cross-encoder/nli-deberta-v3-base,N/A,512,32.49,12996,128.0,3.0,131.0,True,Score premise-hypothesis entailment and contradiction probabilities across sliding sentence windows
+Belief Graph Logit Update & Propagation,Deterministic Python,N/A (Algorithmic),N/A,N/A,2.0725,829,0.0,0.0,0.0,True,Execute logit-space Bayesian belief updates and topological weakest-link uncertainty propagation
+Dense FAISS Paragraph Retrieval,Local CPU (FAISS IndexFlatIP),sentence-transformers/all-MiniLM-L6-v2,N/A,512,2.46,984,64.0,384.0,448.0,True,Cosine similarity ranking over L2-normalized 384-dimensional dense passage vectors
+EIG Probe Searches (Candidate Evaluation),Local CPU (FAISS IndexFlatIP),sentence-transformers/all-MiniLM-L6-v2,N/A,512,4.38,1752,64.0,384.0,448.0,True,Evaluate 3 candidate queries against FAISS index to calculate uncertainty reduction x pool novelty score
