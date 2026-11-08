@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from src.retrieval.index import Embedder, Retriever, RetrieverFactory, BM25Retriever, paragraphs_from_item
+from src.retrieval.index import Embedder, Retriever, RetrieverFactory, BM25Retriever, paragraphs_from_item, MODEL_ALIASES
 
 
 def test_embedder_normalization_and_memo():
@@ -112,3 +112,32 @@ def test_bm25_retriever_ranking_and_factory():
     assert len(res_factory) == 1
     assert res_factory[0]["title"] == "Doc C"
 
+
+def test_embedder_query_passage_prefix_formatting():
+    # Test formatting logic directly without loading heavyweight neural weights
+    emb_e5 = Embedder.__new__(Embedder)
+    emb_e5.name = "intfloat/e5-base-v2"
+    assert emb_e5.format_query("Who is Albert Einstein?") == "query: Who is Albert Einstein?"
+    assert emb_e5.format_query("query: Who is Albert Einstein?") == "query: Who is Albert Einstein?"
+    assert emb_e5.format_passage("Einstein was a physicist.") == "passage: Einstein was a physicist."
+    assert emb_e5.format_passage("passage: Einstein was a physicist.") == "passage: Einstein was a physicist."
+
+    emb_bge = Embedder.__new__(Embedder)
+    emb_bge.name = "BAAI/bge-base-en-v1.5"
+    instruction = "Represent this sentence for searching relevant passages: "
+    assert emb_bge.format_query("Who is Albert Einstein?") == instruction + "Who is Albert Einstein?"
+    assert emb_bge.format_query(instruction + "Who is Albert Einstein?") == instruction + "Who is Albert Einstein?"
+    assert emb_bge.format_passage("Einstein was a physicist.") == "Einstein was a physicist."
+
+    emb_minilm = Embedder.__new__(Embedder)
+    emb_minilm.name = "sentence-transformers/all-MiniLM-L6-v2"
+    assert emb_minilm.format_query("Who is Albert Einstein?") == "Who is Albert Einstein?"
+    assert emb_minilm.format_passage("Einstein was a physicist.") == "Einstein was a physicist."
+
+
+def test_retriever_factory_alias_resolution():
+    assert MODEL_ALIASES["e5"] == "intfloat/e5-base-v2"
+    assert MODEL_ALIASES["e5-base-v2"] == "intfloat/e5-base-v2"
+    assert MODEL_ALIASES["bge"] == "BAAI/bge-base-en-v1.5"
+    assert MODEL_ALIASES["bge-base-en-v1.5"] == "BAAI/bge-base-en-v1.5"
+    assert MODEL_ALIASES["minilm"] == "sentence-transformers/all-MiniLM-L6-v2"

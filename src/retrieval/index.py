@@ -1,4 +1,4 @@
-"""Paragraph retrieval using SentenceTransformers/FAISS IndexFlatIP (Dense) or rank-bm25 BM25Okapi (Sparse)."""
+"""Paragraph retrieval using SentenceTransformers/FAISS IndexFlatIP (Dense) or rank-bm25 BM25Plus (Sparse)."""
 
 import hashlib
 import re
@@ -9,15 +9,49 @@ from rank_bm25 import BM25Plus
 from sentence_transformers import SentenceTransformer
 
 
+MODEL_ALIASES: Dict[str, str] = {
+    "minilm": "sentence-transformers/all-MiniLM-L6-v2",
+    "all-minilm-l6-v2": "sentence-transformers/all-MiniLM-L6-v2",
+    "dense": "sentence-transformers/all-MiniLM-L6-v2",
+    "e5": "intfloat/e5-base-v2",
+    "e5-base-v2": "intfloat/e5-base-v2",
+    "intfloat/e5-base-v2": "intfloat/e5-base-v2",
+    "bge": "BAAI/bge-base-en-v1.5",
+    "bge-base-en-v1.5": "BAAI/bge-base-en-v1.5",
+    "baai/bge-base-en-v1.5": "BAAI/bge-base-en-v1.5",
+}
+
+
 class Embedder:
-    """SentenceTransformer wrapper with in-memory memoization and normalized embeddings."""
+    """SentenceTransformer wrapper with in-memory memoization, asymmetric prefix formatting, and normalized embeddings."""
 
     def __init__(self, name: str = "sentence-transformers/all-MiniLM-L6-v2"):
-        self.model = SentenceTransformer(name)
+        self.name = MODEL_ALIASES.get(name.lower(), name)
+        self.model = SentenceTransformer(self.name)
         self.memo: Dict[str, np.ndarray] = {}
 
+    def format_query(self, query: str) -> str:
+        """Apply model-specific asymmetric query prefix if required."""
+        low = self.name.lower()
+        if "e5" in low:
+            if not query.startswith("query: "):
+                return f"query: {query}"
+        elif "bge" in low:
+            instruction = "Represent this sentence for searching relevant passages: "
+            if not query.startswith(instruction):
+                return f"{instruction}{query}"
+        return query
+
+    def format_passage(self, passage: str) -> str:
+        """Apply model-specific passage prefix if required."""
+        low = self.name.lower()
+        if "e5" in low:
+            if not passage.startswith("passage: "):
+                return f"passage: {passage}"
+        return passage
+
     def encode(self, texts: List[str]) -> np.ndarray:
-        """Encode texts into L2-normalized float32 vectors with memoization."""
+        """Encode raw texts into L2-normalized float32 vectors with memoization."""
         need = [t for t in dict.fromkeys(texts) if t not in self.memo]
         if need:
             vecs = self.model.encode(
@@ -29,6 +63,16 @@ class Embedder:
             for t, v in zip(need, vecs):
                 self.memo[t] = v.astype("float32")
         return np.stack([self.memo[t] for t in texts])
+
+    def encode_queries(self, queries: List[str]) -> np.ndarray:
+        """Format queries with model-specific prefixes and encode."""
+        formatted = [self.format_query(q) for q in queries]
+        return self.encode(formatted)
+
+    def encode_passages(self, passages: List[str]) -> np.ndarray:
+        """Format passages with model-specific prefixes and encode."""
+        formatted = [self.format_passage(p) for p in passages]
+        return self.encode(formatted)
 
 
 def paragraphs_from_item(item: dict) -> List[dict]:
@@ -66,7 +110,8 @@ class Retriever:
             self.index = None
             return
 
-        X = embedder.encode([p["text"] for p in paragraphs])
+        passages = [p["text"] for p in paragraphs]
+        X = embedder.encode_passages(passages)
         self.index = faiss.IndexFlatIP(X.shape[1])
         self.index.add(X)
 
@@ -74,7 +119,7 @@ class Retriever:
         """Retrieve top-k most similar paragraphs for query."""
         if not self.paras or self.index is None:
             return []
-        q = self.emb.encode([query])
+        q = self.emb.encode_queries([query])
         k_search = min(k, len(self.paras))
         scores, ids = self.index.search(q, k_search)
         return [
@@ -127,15 +172,23 @@ class RetrieverFactory:
         retriever_type: str = "dense",
     ):
         self.setting = setting
-        self.emb = embedder
         self.retriever_type = retriever_type.lower()
+
+        if self.retriever_type == "bm25":
+            self.emb = None
+        elif embedder is not None:
+            self.emb = embedder
+        else:
+            resolved_model = MODEL_ALIASES.get(self.retriever_type, self.retriever_type)
+            self.emb = Embedder(resolved_model)
+
         self.pooled: Optional[Any] = None
         if setting == "pooled" and pooled_items is not None:
             pooled_paras = build_pooled(pooled_items)
             if self.retriever_type == "bm25":
                 self.pooled = BM25Retriever(pooled_paras)
             else:
-                self.pooled = Retriever(pooled_paras, embedder)
+                self.pooled = Retriever(pooled_paras, self.emb)
 
     def for_item(self, item: dict) -> Any:
         """Return the shared pooled index or construct a per-question distractor index."""
@@ -145,4 +198,3 @@ class RetrieverFactory:
         if self.retriever_type == "bm25":
             return BM25Retriever(paras)
         return Retriever(paras, self.emb)
-
