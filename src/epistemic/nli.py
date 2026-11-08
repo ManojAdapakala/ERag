@@ -139,6 +139,25 @@ class NLI:
 
         return entities
 
+    @staticmethod
+    def _normalize_passage_text(p: Dict[str, Any]) -> str:
+        """Extract and conservatively normalize passage text for exact duplicate detection.
+        
+        Normalization is strict and conservative:
+        - Extracts text from 'sentences' (joined by space) or fallback 'text' field.
+        - Strips leading/trailing whitespace.
+        - Collapses internal consecutive whitespace runs to a single space.
+        - Preserves all casing, punctuation, and wording.
+        - Does NOT deduplicate by title alone; distinct passages from the same title have
+          different sentence content and are strictly preserved.
+        """
+        s = p.get("sentences")
+        if isinstance(s, list):
+            raw = " ".join(str(sent).strip() for sent in s if str(sent).strip())
+        else:
+            raw = str(p.get("text", "")).strip()
+        return " ".join(raw.split())
+
     def verify(
         self,
         claim: str,
@@ -152,37 +171,69 @@ class NLI:
         con: List[Tuple[str, float]] = []
         ents = self._extract_subject_entities(claim)
 
+        # 1. Group passages by normalized text to prevent identical text from contributing repeatedly
+        # while preserving all associated source/title candidates order-invariantly.
+        grouped: Dict[str, List[Dict[str, Any]]] = {}
+        empty_key_idx = 0
         for p in passages:
-            title = p.get("title", "unknown")
-            base_title = re.sub(r'\s*\([^)]*\)', '', title).strip().lower()
-            p_text = (
-                title + " " + (" ".join(p.get("sentences", [])) if isinstance(p.get("sentences"), list) else p.get("text", ""))
-            ).lower()
-
-            if ents:
-                title_in_claim = bool(len(base_title) >= 3 and base_title in claim.lower())
-                ent_in_passage = any(
-                    ent.lower() in title.lower() or re.search(rf"\b{re.escape(ent.lower())}\b", p_text)
-                    for ent in ents
-                )
-                mentions_subject = title_in_claim or ent_in_passage
+            norm_text = self._normalize_passage_text(p)
+            if norm_text:
+                grouped.setdefault(norm_text, []).append(p)
             else:
-                subj_tokens = [w.lower() for w in re.findall(r"\b[a-zA-Z]{3,}\b", claim) if w.lower() not in {"the", "and", "was", "were", "are", "for", "with"}]
-                mentions_subject = any(re.search(rf"\b{re.escape(tok)}\b", p_text) for tok in subj_tokens) if subj_tokens else True
+                grouped[f"__empty__{empty_key_idx}"] = [p]
+                empty_key_idx += 1
+
+        duplicates_skipped = sum(len(p_list) - 1 for p_list in grouped.values())
+
+        # 2. Evaluate each unique evidence text
+        for norm_text, p_list in grouped.items():
+            grounded_candidates = []
+            ungrounded_candidates = []
+
+            for p in p_list:
+                title = p.get("title", "unknown")
+                base_title = re.sub(r'\s*\([^)]*\)', '', title).strip().lower()
+                p_text = (
+                    title + " " + (" ".join(p.get("sentences", [])) if isinstance(p.get("sentences"), list) else p.get("text", ""))
+                ).lower()
+
+                if ents:
+                    title_in_claim = bool(len(base_title) >= 3 and base_title in claim.lower())
+                    ent_in_passage = any(
+                        ent.lower() in title.lower() or re.search(rf"\b{re.escape(ent.lower())}\b", p_text)
+                        for ent in ents
+                    )
+                    mentions = title_in_claim or ent_in_passage
+                else:
+                    subj_tokens = [w.lower() for w in re.findall(r"\b[a-zA-Z]{3,}\b", claim) if w.lower() not in {"the", "and", "was", "were", "are", "for", "with"}]
+                    mentions = any(re.search(rf"\b{re.escape(tok)}\b", p_text) for tok in subj_tokens) if subj_tokens else True
+
+                if mentions:
+                    grounded_candidates.append((title, p))
+                else:
+                    ungrounded_candidates.append((title, p))
+
+            # Determine entity grounding and representative passage deterministically
+            if grounded_candidates:
+                mentions_subject = True
+                chosen_title, rep_p = min(grounded_candidates, key=lambda x: str(x[0]))
+            else:
+                mentions_subject = False
+                chosen_title, rep_p = min(ungrounded_candidates, key=lambda x: str(x[0]))
 
             # Pre-inference filter: skip expensive cross-encoder scoring on topic-disjoint passages
             if pre_filter and not mentions_subject:
                 continue
 
-            e, c = self.best(claim, p)
-            w = float(p.get("weight", 1.0))
+            e, c = self.best(claim, rep_p)
+            w = float(rep_p.get("weight", 1.0))
             e, c = e * w, c * w
 
             if e >= theta_s:
-                sup.append((title, e))
+                sup.append((chosen_title, e))
 
             if c >= theta_c and mentions_subject:
-                con.append((title, c))
+                con.append((chosen_title, c))
 
         be = max((x for _, x in sup), default=0.0)
         bc = max((x for _, x in con), default=0.0)
@@ -200,5 +251,11 @@ class NLI:
             status = "unresolved"
             conflict = False
 
-        return {"status": status, "conflict": conflict, "sup": sup, "con": con}
+        return {
+            "status": status,
+            "conflict": conflict,
+            "sup": sup,
+            "con": con,
+            "duplicates_skipped": duplicates_skipped,
+        }
 

@@ -93,11 +93,11 @@ def test_retry_exhaustion_raises_runtime_error():
         # Mock time.sleep to avoid waiting during test
         from unittest.mock import patch
         with patch("time.sleep", return_value=None):
-            with pytest.raises(RuntimeError, match="LLM call failed after 4 attempts"):
+            with pytest.raises(RuntimeError, match="LLM call failed after 6 attempts"):
                 llm.chat([{"role": "user", "content": "fail"}], tr)
 
-        assert tr.failures == 4
-        assert mock_groq.chat.completions.create.call_count == 4
+        assert tr.failures == 6
+        assert mock_groq.chat.completions.create.call_count == 6
     finally:
         llm.close()
         if os.path.exists(tmp_db):

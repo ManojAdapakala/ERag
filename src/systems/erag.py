@@ -131,6 +131,7 @@ def run_erag(
     hop, c0, trace, seen_contra = 0, None, [], False
     initial_draft = None
     prev_claims = None
+    stop_reason = "unknown"
 
     while True:
         # Step 2: Generation of draft answer
@@ -180,7 +181,14 @@ def run_erag(
         })
 
         # Check stopping criteria: observational mode, no_adaptive ablation, or max_hops exhausted
-        if not active or "no_adaptive" in ablate or hop >= e.get("max_hops", 2):
+        if not active:
+            stop_reason = "non_adaptive_mode"
+            break
+        if "no_adaptive" in ablate:
+            stop_reason = "no_adaptive_ablation"
+            break
+        if hop >= e.get("max_hops", 2):
+            stop_reason = "max_hops_exhausted"
             break
 
         # Step 8 & 9: Gap selection and No-Gap Fast Path
@@ -191,10 +199,12 @@ def run_erag(
         elif "no_fast" in ablate or graph.min_eff() < e.get("theta_fast", 0.8):
             target = graph.weakest(graph.claims)
         else:
-            break  # Fast Path: all claims sufficiently supported
+            stop_reason = "fast_path"  # Fast Path: all claims sufficiently supported
+            break
 
         # Saturation check: if pool has reached capacity, further retrieval cannot expand context
         if saturation_precheck and len(pool) >= e.get("pool_cap", 12):
+            stop_reason = "pool_capacity_saturated"
             break
 
         # Step 10 & 11: EIG-inspired query selection and adaptive retrieval
@@ -203,6 +213,7 @@ def run_erag(
             eig_strategy=eig_strategy, saturation_precheck=saturation_precheck
         )
         if not new:
+            stop_reason = "no_novel_evidence"
             break
         pool = (pool + new)[: e.get("pool_cap", 12)]
         hop += 1
@@ -234,6 +245,13 @@ def run_erag(
     abstain = "no_conf" not in ablate and (ans.eff < e.get("theta_abs", 0.4))
     answer = "unknown" if (active and abstain) else draft
 
+    if not active:
+        output_reason = "observational_draft"
+    elif abstain:
+        output_reason = "abstained_low_confidence"
+    else:
+        output_reason = "answered"
+
     if memory is not None and active:
         memory.write(graph, c0, seen_contra, cfg)
 
@@ -246,6 +264,9 @@ def run_erag(
         "c0": float(c0),
         "pool_titles": [p["title"] for p in pool],
         "hops": hop,
+        "loop_stop_reason": stop_reason,
+        "output_reason": output_reason,
+        "fast_path": bool(stop_reason == "fast_path"),
         "trace": trace,
         "mem_used": len(mem_passages),
         "mem_events": mem_events,
