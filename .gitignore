@@ -97,6 +97,7 @@ results/cost_opt/
 *.swp
 *.swo
 *~
+*.lock
 
 # 10. IDE & OS Artifacts
 .vscode/
