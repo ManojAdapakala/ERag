@@ -287,6 +287,32 @@ def main():
                 s = evaluate_records(recs, sys_name, ret_name)
                 all_summaries.append(s)
 
+    # 4. Existing E5 Runs
+    e5_files = [
+        ("Standard RAG", "E5-base-v2 (Dense)", "results/phase5/standard_e5_test.jsonl"),
+        ("IRCoT", "E5-base-v2 (Dense)", "results/phase5/ircot_e5_test.jsonl"),
+        ("E-RAG-Balanced", "E5-base-v2 (Dense)", "results/phase5/erag_balanced_e5_test.jsonl"),
+    ]
+    for sys_name, ret_name, fpath in e5_files:
+        if os.path.exists(fpath):
+            recs = load_jsonl(fpath)
+            if recs:
+                s = evaluate_records(recs, sys_name, ret_name)
+                all_summaries.append(s)
+
+    # 5. Existing BGE Runs
+    bge_files = [
+        ("Standard RAG", "BGE-base-en-v1.5 (Dense)", "results/phase5/standard_bge_test.jsonl"),
+        ("IRCoT", "BGE-base-en-v1.5 (Dense)", "results/phase5/ircot_bge_test.jsonl"),
+        ("E-RAG-Balanced", "BGE-base-en-v1.5 (Dense)", "results/phase5/erag_balanced_bge_test.jsonl"),
+    ]
+    for sys_name, ret_name, fpath in bge_files:
+        if os.path.exists(fpath):
+            recs = load_jsonl(fpath)
+            if recs:
+                s = evaluate_records(recs, sys_name, ret_name)
+                all_summaries.append(s)
+
     if args.retriever != "aggregate-only":
         print("Initializing NLI Verifier (cross-encoder/nli-deberta-v3-base)...")
         nli = NLI(base_cfg["nli"]["model"], base_cfg["nli"]["window"])

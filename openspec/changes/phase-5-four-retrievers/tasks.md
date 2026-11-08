@@ -13,13 +13,13 @@
 
 ## 3. Benchmark Evaluation on Test-400
 
-- [ ] 3.1 Execute E5-base-v2 evaluations for Standard RAG, IRCoT, and E-RAG-Balanced on Test-400 ($N=400$)
-- [ ] 3.2 Execute BGE-base-en-v1.5 evaluations for Standard RAG, IRCoT, and E-RAG-Balanced on Test-400 ($N=400$)
+- [x] 3.1 Execute E5-base-v2 evaluations for Standard RAG, IRCoT, and E-RAG-Balanced on Test-400 ($N=400$)
+- [x] 3.2 Execute BGE-base-en-v1.5 evaluations for Standard RAG, IRCoT, and E-RAG-Balanced on Test-400 ($N=400$)
 
 ## 4. Matrix Aggregation & Scientific Reporting
 
-- [ ] 4.1 Aggregate all 12 experimental conditions into `research/retrievers/four_retriever_benchmark.csv` and verify metric completeness
-- [ ] 4.2 Author comprehensive Phase 5 Completion Report (`research/retrievers/four_retriever_analysis_report.md`) with Headings A through K
+- [x] 4.1 Aggregate all 12 experimental conditions into `research/retrievers/four_retriever_benchmark.csv` and verify metric completeness
+- [x] 4.2 Author comprehensive Phase 5 Completion Report (`research/retrievers/four_retriever_analysis_report.md`) with Headings A through K
 
 ## Workflow follow-up
 
