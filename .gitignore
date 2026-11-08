@@ -80,15 +80,10 @@ lightning_logs/
 data/raw/
 data/cache/
 
-# 8. Experimental Outputs & Large Prediction Dumps
-# (Preserve summary CSVs, exclude voluminous question-level predictions & local cache)
-results/cache.sqlite
-results/nli_memo.pkl
-results/*.jsonl
-results/**/*.jsonl
-results/*.png
-results/**/*.png
-results/cost_opt/
+# 8. Experimental Outputs & Prediction Tracking
+# (Experimental results, predictions, plots, cache and benchmark outputs are continuously tracked)
+!results/cache.sqlite
+!results/nli_memo.pkl
 
 # 9. Logs, Temp Files & Editor Backups
 *.log
