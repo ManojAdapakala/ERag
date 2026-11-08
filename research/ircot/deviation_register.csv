@@ -1,0 +1,20 @@
+dimension_id,attribute_name,category,trivedi_original_value,our_implementation_value,match_status,scientific_rationale,comparability_impact
+1,Core Interleaving Logic,Algorithm,Alternates CoT step generation and retrieval,Alternates CoT step generation and retrieval,Exact Match,Preserves invariant foundation of IRCoT,Zero deviation
+2,Retrieval Query Formulation,Algorithm,Latest generated reasoning sentence as search query,Latest generated reasoning sentence as search query,Exact Match,Faithful implementation of thought-querying,Zero deviation
+3,Accumulation Strategy,Algorithm,Appends non-duplicate passages preserving order,Appends non-duplicate passages preserving order,Exact Match,Prevents chronological context jitter,Zero deviation
+4,Stopping Rule - Prefix,Algorithm,Stops on "So the answer is:",Stops on "so the answer is" in lower,Exact Match,Terminates upon reaching conclusion,Zero deviation
+5,Stopping Rule - Max Steps,Algorithm,"M in [4, 7] steps (4 for HotpotQA)",max_steps = 4,Exact Match,Bounds reasoning depth identically,Zero deviation
+6,Stopping Rule - Empty,Algorithm,Stops on empty string or newline,Stops on empty or whitespace line,Exact Match,Prevents infinite loops,Zero deviation
+7,Final Reader Stage,Algorithm,Separate reader prompt over context (ircot_qa),Separate reader prompt over context (answer_messages),Exact Match,Prevents truncated final sentences,Zero deviation
+8,Evidence Budget (pool_cap),Budget,12 to 15 paragraphs max,pool_cap = 12 paragraphs max,Exact Match,Matches context window budget,Zero deviation
+9,Evaluation Metrics,Evaluation,HotpotQA official EM and Token F1,HotpotQA official EM and Token F1,Exact Match,Direct mathematical parity,Zero deviation
+10,Normalization Script,Evaluation,hotpot_evaluate_v1.py,src/eval/metrics.py:normalize_answer,Exact Match,Bit-for-bit exact string normalization,Zero deviation
+11,Generator Model,Model,OpenAI Codex (code-davinci-002) 175B,Groq openai/gpt-oss-20b,Controlled Adaptation,Replaces deprecated proprietary API with reproducible open-weights model,Isolates architecture from proprietary LLM variance
+12,Decoding Temperature,Hyperparameter,0.0 (greedy decoding),0.0 (greedy decoding),Exact Match,Eliminates sampling variance,Zero deviation
+13,Prompting Strategy,Prompting,6-shot to 8-shot hand-crafted CoT exemplars,Zero-shot directive instruction prompt,Controlled Adaptation,Guarantees fair control across System A/B/C without exemplar memorization,Reflects pure algorithmic capability
+14,Corpus Scale,Data,5.23M passages (Oct 2017 fullwiki dump),10 candidate passages per question (HotpotQA distractor),Controlled Adaptation,Isolates multi-hop reasoning from web-scale passage filtering noise,Absolute scores cannot be directly compared to open-domain
+15,Retrieval Algorithm - Dense,Retrieval,Contriever (Appendix study),sentence-transformers/all-MiniLM-L6-v2,Controlled Adaptation,Modern high-efficiency dense retriever,Matches E-RAG baseline dense index
+16,Retrieval Algorithm - Sparse,Retrieval,BM25 via Elasticsearch server,BM25Okapi via rank-bm25 (Phase 4),Controlled Adaptation,Enables direct local in-memory sparse retrieval without Elasticsearch daemon,Matches BM25 scoring mathematically
+17,Top-k per Hop,Hyperparameter,k=2 or k=3,k=3 (or k=2 per config),Exact Match,Aligns evidence expansion rate per hop,Zero deviation
+18,Confidence & Abstention,Epistemic,None (uncalibrated overconfident generation),None (uncalibrated overconfident generation),Exact Match,Faithfully preserves IRCoT lack of epistemic calibration,Proves E-RAG epistemic advantage
+
