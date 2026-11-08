@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from src.retrieval.index import Embedder, Retriever, RetrieverFactory, paragraphs_from_item
+from src.retrieval.index import Embedder, Retriever, RetrieverFactory, BM25Retriever, paragraphs_from_item
 
 
 def test_embedder_normalization_and_memo():
@@ -83,4 +83,32 @@ def test_gold_supporting_facts_present_in_distractor_context():
         context_titles = {t for t, _ in item["context"]}
         gold_titles = {t for t, _ in item["supporting_facts"]}
         assert gold_titles.issubset(context_titles), f"Gold titles missing in context for question {item['_id']}"
+
+
+def test_bm25_retriever_ranking_and_factory():
+    paras = [
+        {"title": "Doc A", "sentences": ["Albert Einstein was a theoretical physicist.", "He won the Nobel Prize."], "text": "Doc A. Albert Einstein was a theoretical physicist. He won the Nobel Prize."},
+        {"title": "Doc B", "sentences": ["Marie Curie was a pioneering physicist and chemist.", "She won two Nobel Prizes."], "text": "Doc B. Marie Curie was a pioneering physicist and chemist. She won two Nobel Prizes."},
+        {"title": "Doc C", "sentences": ["The Eiffel Tower is located in Paris, France."], "text": "Doc C. The Eiffel Tower is located in Paris, France."},
+    ]
+    bm25 = BM25Retriever(paras)
+    res = bm25.search("Who was Albert Einstein the physicist?", k=1)
+    assert len(res) == 1
+    assert res[0]["title"] == "Doc A"
+    assert res[0]["score"] > 0.0
+
+    # Test via RetrieverFactory
+    sample_item = {
+        "_id": "bm25_test",
+        "question": "Where is the Eiffel Tower?",
+        "context": [
+            ["Doc A", ["Albert Einstein was a physicist."]],
+            ["Doc C", ["The Eiffel Tower is located in Paris, France."]],
+        ],
+    }
+    factory = RetrieverFactory(setting="distractor", retriever_type="bm25")
+    ret = factory.for_item(sample_item)
+    res_factory = ret.search("Eiffel Tower Paris", k=1)
+    assert len(res_factory) == 1
+    assert res_factory[0]["title"] == "Doc C"
 

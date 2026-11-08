@@ -1,9 +1,11 @@
-"""Dense paragraph retrieval using SentenceTransformers and FAISS IndexFlatIP."""
+"""Paragraph retrieval using SentenceTransformers/FAISS IndexFlatIP (Dense) or rank-bm25 BM25Okapi (Sparse)."""
 
 import hashlib
-from typing import Dict, List, Optional
+import re
+from typing import Any, Dict, List, Optional
 import faiss
 import numpy as np
+from rank_bm25 import BM25Plus
 from sentence_transformers import SentenceTransformer
 
 
@@ -82,20 +84,65 @@ class Retriever:
         ]
 
 
+class BM25Retriever:
+    """Sparse lexical BM25 retriever using rank-bm25 BM25Plus (Lucene-compatible lower-bound IDF)."""
+
+    def __init__(self, paragraphs: List[dict]):
+        self.paras = paragraphs
+        if not paragraphs:
+            self.bm25 = None
+            return
+        self.corpus_tokens = [self._tokenize(p["text"]) for p in paragraphs]
+        self.bm25 = BM25Plus(self.corpus_tokens)
+
+    @staticmethod
+    def _tokenize(text: str) -> List[str]:
+        """Simple, standard word-level tokenizer for BM25: lowercase alphanumeric tokens."""
+        return [w.strip() for w in re.findall(r"\w+", text.lower()) if w.strip()]
+
+    def search(self, query: str, k: int = 3) -> List[dict]:
+        """Retrieve top-k highest-scoring BM25 paragraphs for query."""
+        if not self.paras or self.bm25 is None:
+            return []
+        q_tokens = self._tokenize(query)
+        if not q_tokens:
+            return [dict(p, score=0.0) for p in self.paras[:k]]
+        scores = self.bm25.get_scores(q_tokens)
+        k_search = min(k, len(self.paras))
+        top_indices = np.argsort(scores)[::-1][:k_search]
+        return [
+            dict(self.paras[i], score=float(scores[i]))
+            for i in top_indices
+        ]
+
+
 class RetrieverFactory:
     """Factory supporting distractor (per-question index) and pooled (shared corpus index)."""
 
-    def __init__(self, setting: str, embedder: Embedder, pooled_items: Optional[List[dict]] = None):
+    def __init__(
+        self,
+        setting: str,
+        embedder: Optional[Embedder] = None,
+        pooled_items: Optional[List[dict]] = None,
+        retriever_type: str = "dense",
+    ):
         self.setting = setting
         self.emb = embedder
-        self.pooled: Optional[Retriever] = None
+        self.retriever_type = retriever_type.lower()
+        self.pooled: Optional[Any] = None
         if setting == "pooled" and pooled_items is not None:
             pooled_paras = build_pooled(pooled_items)
-            self.pooled = Retriever(pooled_paras, embedder)
+            if self.retriever_type == "bm25":
+                self.pooled = BM25Retriever(pooled_paras)
+            else:
+                self.pooled = Retriever(pooled_paras, embedder)
 
-    def for_item(self, item: dict) -> Retriever:
+    def for_item(self, item: dict) -> Any:
         """Return the shared pooled index or construct a per-question distractor index."""
         if self.pooled is not None:
             return self.pooled
-        return Retriever(paragraphs_from_item(item), self.emb)
+        paras = paragraphs_from_item(item)
+        if self.retriever_type == "bm25":
+            return BM25Retriever(paras)
+        return Retriever(paras, self.emb)
 

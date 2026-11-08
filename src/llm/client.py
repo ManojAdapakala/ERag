@@ -69,7 +69,7 @@ class LLM:
                     "Please set GROQ_API_KEY in your environment or .env file."
                 )
             from groq import Groq
-            self._client = Groq(api_key=self.api_key)
+            self._client = Groq(api_key=self.api_key, timeout=30.0)
         return self._client
 
     def _key(
@@ -114,10 +114,10 @@ class LLM:
                 tracker.out_tokens += out.get("out", 0)
                 return out["text"]
 
-        # 2. Call Groq API with exponential backoff (1 try + 3 retries = 4 attempts)
+        # 2. Call Groq API with exponential backoff (1 try + 5 retries = 6 attempts)
         out = None
         dt = 0.0
-        for attempt in range(4):
+        for attempt in range(6):
             try:
                 kw: Dict[str, Any] = {
                     "model": self.m["name"],
@@ -146,10 +146,11 @@ class LLM:
                 break
             except Exception as ex:
                 tracker.failures += 1
-                if attempt == 3:
-                    raise RuntimeError(f"LLM call failed after 4 attempts: {repr(ex)}") from ex
-                # Exponential backoff: 2s, 4s, 8s (up to max 30s)
-                time.sleep(min(2 ** attempt * 2, 30))
+                if attempt == 5:
+                    raise RuntimeError(f"LLM call failed after 6 attempts: {repr(ex)}") from ex
+                # Exponential backoff with rate-limit protection
+                sleep_secs = min(2 ** attempt * 3, 45)
+                time.sleep(sleep_secs)
 
         if out is None:
             raise RuntimeError("LLM completion returned None without exception")
