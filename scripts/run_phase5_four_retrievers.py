@@ -41,6 +41,16 @@ from src.epistemic.nli import NLI
 from src.systems.standard import run_standard
 from src.systems.ircot import run_ircot
 from src.systems.erag import run_erag
+from src.provenance import (
+    RunLock,
+    SidecarManager,
+    check_memory_gating,
+    compute_config_hash,
+    get_source_identity,
+    prepare_output_file_for_append,
+    read_existing_output_records,
+    validate_manifest,
+)
 
 
 def is_pid_running(pid: int) -> bool:
@@ -149,80 +159,130 @@ def execute_system_retriever(
     cfg: Dict[str, Any],
     embedder: Optional[Embedder] = None,
     limit: Optional[int] = None,
+    manifest_meta: Optional[Dict[str, Any]] = None,
+    clear_stale_lock: bool = False,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    # 1. Memory gating pre-flight check
+    check_memory_gating(cfg)
+
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    existing_records = load_jsonl(output_path)
-    done_ids = {r["id"] for r in existing_records}
-
     target_items = test_items[:limit] if limit else test_items
-    remaining = [it for it in target_items if it["_id"] not in done_ids]
+    manifest_id_set = {it["_id"] for it in target_items}
 
-    print(f"\n[{system_type} + {retriever_name}] Target: {len(target_items)} | Completed: {len(done_ids)} | Remaining: {len(remaining)}")
+    # 2. Acquire process lock guarding output file
+    with RunLock(output_path, clear_stale_lock=clear_stale_lock):
+        # 3. Fail-closed reading of existing output records
+        existing_records, done_ids = read_existing_output_records(output_path, manifest_id_set)
 
-    records = list(existing_records)
-    if remaining:
-        # Create RetrieverFactory for this retriever
-        factory = RetrieverFactory(
-            setting="distractor",
-            embedder=embedder,
-            retriever_type=retriever_name,
+        # 4. Capture source identity and configuration hashes before model initialization
+        source_ident = get_source_identity()
+        resolved_cfg_hash = compute_config_hash(cfg)
+        retriever_ident = {
+            "setting": "distractor",
+            "retriever_type": retriever_name,
+            "embedder": getattr(embedder, "model_name", None) or retriever_name,
+        }
+        provider_ident = {
+            "model": cfg.get("model", {}).get("name"),
+            "temperature": cfg.get("model", {}).get("temperature"),
+            "max_tokens": cfg.get("model", {}).get("max_tokens"),
+            "reasoning_effort": cfg.get("model", {}).get("reasoning_effort"),
+        }
+
+        # 5. Initialize or verify immutable sidecar identity
+        sidecar_mgr = SidecarManager(output_path)
+        effective_manifest_meta = manifest_meta or {
+            "manifest_path": "data/manifests/test.jsonl",
+            "manifest_sha256": "unknown",
+            "manifest_id_sequence_sha256": "unknown",
+            "total_questions": len(test_items),
+        }
+        sidecar_mgr.initialize_or_verify(
+            system=system_type,
+            mode="active",
+            resolved_config_sha256=resolved_cfg_hash,
+            source_identity=source_ident,
+            manifest_meta=effective_manifest_meta,
+            retriever_identity=retriever_ident,
+            provider_identity=provider_ident,
+            raw_config=cfg,
         )
-        llm = LLM(
-            cfg,
-            use_cache=cfg["run"].get("cache", True),
-            namespace=cfg["run"].get("cache_namespace", "test_v1"),
-        )
 
-        with open(output_path, "a", encoding="utf-8") as f:
-            for item in tqdm(remaining, desc=f"Evaluating {system_type} + {retriever_name}", initial=len(records), total=len(target_items), file=sys.stdout):
-                retriever = factory.for_item(item)
-                tr = Tracker()
-                t0 = time.time()
+        # 6. Ensure safe append boundary
+        prepare_output_file_for_append(output_path)
 
-                try:
-                    if system_type == "Standard RAG":
-                        r = run_standard(item, retriever, llm, cfg, tr)
-                    elif system_type == "IRCoT":
-                        r = run_ircot(item, retriever, llm, cfg, tr)
-                    elif system_type == "E-RAG-Balanced":
-                        r = run_erag(item, retriever, llm, nli, cfg, tr)
-                    else:
-                        raise ValueError(f"Unknown system: {system_type}")
-                except Exception as err:
-                    print(f"\nWarning: Exception on question {item['_id']}: {err}. Retrying in 5s...")
-                    time.sleep(5.0)
-                    if system_type == "Standard RAG":
-                        r = run_standard(item, retriever, llm, cfg, tr)
-                    elif system_type == "IRCoT":
-                        r = run_ircot(item, retriever, llm, cfg, tr)
-                    elif system_type == "E-RAG-Balanced":
-                        r = run_erag(item, retriever, llm, nli, cfg, tr)
+        remaining = [it for it in target_items if it["_id"] not in done_ids]
+        print(f"\n[{system_type} + {retriever_name}] Target: {len(target_items)} | Completed: {len(done_ids)} | Remaining: {len(remaining)}")
 
-                wall = time.time() - t0
-                rec_score, all_gold = retrieval_recall(r.get("pool_titles", []), item)
+        records = list(existing_records)
+        newly_written = 0
+        if remaining:
+            # Create RetrieverFactory for this retriever
+            factory = RetrieverFactory(
+                setting="distractor",
+                embedder=embedder,
+                retriever_type=retriever_name,
+            )
+            llm = LLM(
+                cfg,
+                use_cache=cfg["run"].get("cache", True),
+                namespace=cfg["run"].get("cache_namespace", "test_v1"),
+            )
 
-                rec = {
-                    "id": item["_id"],
-                    "question": item["question"],
-                    "gold": item["answer"],
-                    "em": exact_match(r["answer"], item["answer"]),
-                    "f1": f1_score(r["answer"], item["answer"]),
-                    "unknown": is_unknown(r["answer"]),
-                    "recall": rec_score,
-                    "all_gold": all_gold,
-                    "llm_calls": tr.llm_calls,
-                    "retrievals": tr.retrievals,
-                    "probe_searches": tr.probe_searches,
-                    "in_tokens": tr.in_tokens,
-                    "out_tokens": tr.out_tokens,
-                    "api_latency": tr.latency,
-                    "wall_latency": wall,
-                    "cache_hits": tr.cache_hits,
-                }
-                rec.update(r)
-                f.write(json.dumps(rec) + "\n")
-                f.flush()
-                records.append(rec)
+            with open(output_path, "a", encoding="utf-8") as f:
+                for item in tqdm(remaining, desc=f"Evaluating {system_type} + {retriever_name}", initial=len(records), total=len(target_items), file=sys.stdout):
+                    retriever = factory.for_item(item)
+                    tr = Tracker()
+                    t0 = time.time()
+
+                    try:
+                        if system_type == "Standard RAG":
+                            r = run_standard(item, retriever, llm, cfg, tr)
+                        elif system_type == "IRCoT":
+                            r = run_ircot(item, retriever, llm, cfg, tr)
+                        elif system_type == "E-RAG-Balanced":
+                            r = run_erag(item, retriever, llm, nli, cfg, tr)
+                        else:
+                            raise ValueError(f"Unknown system: {system_type}")
+                    except Exception as err:
+                        print(f"\nWarning: Exception on question {item['_id']}: {err}. Retrying in 5s...")
+                        time.sleep(5.0)
+                        if system_type == "Standard RAG":
+                            r = run_standard(item, retriever, llm, cfg, tr)
+                        elif system_type == "IRCoT":
+                            r = run_ircot(item, retriever, llm, cfg, tr)
+                        elif system_type == "E-RAG-Balanced":
+                            r = run_erag(item, retriever, llm, nli, cfg, tr)
+
+                    wall = time.time() - t0
+                    rec_score, all_gold = retrieval_recall(r.get("pool_titles", []), item)
+
+                    rec = {
+                        "id": item["_id"],
+                        "question": item["question"],
+                        "gold": item["answer"],
+                        "em": exact_match(r["answer"], item["answer"]),
+                        "f1": f1_score(r["answer"], item["answer"]),
+                        "unknown": is_unknown(r["answer"]),
+                        "recall": rec_score,
+                        "all_gold": all_gold,
+                        "llm_calls": tr.llm_calls,
+                        "retrievals": tr.retrievals,
+                        "probe_searches": tr.probe_searches,
+                        "in_tokens": tr.in_tokens,
+                        "out_tokens": tr.out_tokens,
+                        "api_latency": tr.latency,
+                        "wall_latency": wall,
+                        "cache_hits": tr.cache_hits,
+                    }
+                    rec.update(r)
+                    f.write(json.dumps(rec) + "\n")
+                    f.flush()
+                    records.append(rec)
+                    newly_written += 1
+
+        if len(done_ids) + newly_written >= len(target_items):
+            sidecar_mgr.mark_completed(completed_count=len(target_items))
 
     summary = evaluate_records(records, system_type, retriever_name)
     return records, summary
@@ -233,15 +293,16 @@ def main():
     parser.add_argument("--retriever", type=str, default="all", choices=["all", "e5", "bge", "aggregate-only"])
     parser.add_argument("--system", type=str, default="all", choices=["all", "standard", "ircot", "erag"])
     parser.add_argument("--limit", type=int, default=None, help="Limit number of evaluation questions")
+    parser.add_argument("--clear-stale-lock", action="store_true", help="Clear stale lockfile from deceased PID")
     args = parser.parse_args()
 
-    acquire_process_lock()
     print("=================================================================")
     print("PHASE 5: FOUR-RETRIEVER COMPARATIVE BENCHMARK (TEST-400)")
     print("=================================================================")
 
     test_path = "data/manifests/test.jsonl"
-    test_items = load_jsonl(test_path)
+    manifest_meta = validate_manifest(test_path)
+    test_items = manifest_meta["items"]
     print(f"Loaded Test Manifest: {len(test_items)} questions.")
 
     os.makedirs("results/phase5", exist_ok=True)
@@ -347,6 +408,8 @@ def main():
                     cfg=run_cfg,
                     embedder=embedder,
                     limit=args.limit,
+                    manifest_meta=manifest_meta,
+                    clear_stale_lock=args.clear_stale_lock,
                 )
                 all_summaries.append(summary)
 

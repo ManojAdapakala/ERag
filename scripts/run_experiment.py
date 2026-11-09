@@ -21,6 +21,16 @@ from src.eval.metrics import exact_match, f1_score, is_unknown, retrieval_recall
 from src.llm.client import LLM, Tracker
 from src.retrieval.index import Embedder, RetrieverFactory
 from src.systems.standard import run_closed_book, run_standard
+from src.provenance import (
+    RunLock,
+    SidecarManager,
+    check_memory_gating,
+    compute_config_hash,
+    get_source_identity,
+    prepare_output_file_for_append,
+    read_existing_output_records,
+    validate_manifest,
+)
 
 
 def flat(d: Dict[str, Any], prefix: str = "") -> Generator[Tuple[str, str], None, None]:
@@ -129,129 +139,163 @@ def main():
     ap.add_argument("--config", nargs="+", required=True, help="YAML config files (in order)")
     ap.add_argument("--set", nargs="*", default=[], help="Config overrides (key=val)")
     ap.add_argument("--limit", type=int, help="Optional question count limit")
+    ap.add_argument("--clear-stale-lock", action="store_true", help="Clear stale lockfile from deceased PID")
     a = ap.parse_args()
 
     cfg = apply_overrides(load_cfg(*a.config), a.set)
+
+    # 1. Memory gating pre-flight check
+    check_memory_gating(cfg)
+
     manifest_dir = cfg["data"]["manifest_dir"]
     system = cfg["run"]["system"]
     split = cfg["data"]["split"]
 
     manifest_file = os.path.join(manifest_dir, f"{split}.jsonl")
-    items = load_jsonl(manifest_file)[: a.limit]
-
-    pooled = None
-    if cfg["retrieval"]["setting"] == "pooled":
-        dev_path = os.path.join(manifest_dir, "dev.jsonl")
-        test_path = os.path.join(manifest_dir, "test.jsonl")
-        if split in ("dev", "test") and os.path.exists(dev_path) and os.path.exists(test_path):
-            pooled = load_jsonl(dev_path) + load_jsonl(test_path)
-        else:
-            pooled = items
-
-    emb = Embedder(cfg["retrieval"]["embedder"])
-    factory = RetrieverFactory(cfg["retrieval"]["setting"], emb, pooled)
-    llm = LLM(
-        cfg,
-        use_cache=cfg["run"]["cache"],
-        namespace=cfg["run"]["cache_namespace"],
-    )
-
-    nli = None
-    if system == "erag":
-        from src.epistemic.nli import NLI
-        nli = NLI(cfg["nli"]["model"], cfg["nli"]["window"])
-
-    memory = None
-    if cfg.get("memory", {}).get("enabled"):
-        from src.systems.memory import BeliefMemory
-        memory = BeliefMemory(emb, cfg)
-        if cfg["memory"].get("plant"):
-            with open(cfg["memory"]["plant"], "r", encoding="utf-8") as pf:
-                for b in json.load(pf):
-                    memory.insert(b["text"], b.get("conf", 0.9))
+    manifest_meta = validate_manifest(manifest_file)
+    items = manifest_meta["items"][: a.limit] if a.limit else manifest_meta["items"]
+    manifest_id_set = {item["_id"] for item in items}
 
     os.makedirs(cfg["run"]["out_dir"], exist_ok=True)
     out_path = os.path.join(cfg["run"]["out_dir"], f"{cfg['run']['name']}.jsonl")
 
-    # Crash recovery: skip questions already successfully completed in output file
-    done_ids = set()
-    if os.path.exists(out_path):
-        for line in load_jsonl(out_path):
-            if not line.get("failed", False):
-                done_ids.add(line["id"])
+    # 2. Acquire process lock guarding output file
+    with RunLock(out_path, clear_stale_lock=a.clear_stale_lock):
+        # 3. Fail-closed output reading (every valid record, including failed=True, is completed)
+        existing_records, done_ids = read_existing_output_records(out_path, manifest_id_set)
 
-    mlflow.set_experiment("erag")
-    with mlflow.start_run(run_name=cfg["run"]["name"]):
-        mlflow.log_params(dict(flat(cfg)))
-        mlflow.set_tags({
-            "git_commit": git_commit(),
-            "system": system,
-            "split": split,
-            "retrieval_setting": cfg["retrieval"]["setting"],
-        })
+        # 4. Capture source identity and configuration hashes before model initialization
+        source_ident = get_source_identity()
+        resolved_cfg_hash = compute_config_hash(cfg)
+        retriever_ident = {
+            "setting": cfg["retrieval"]["setting"],
+            "embedder": cfg["retrieval"].get("embedder"),
+        }
+        provider_ident = {
+            "model": cfg.get("model", {}).get("name"),
+            "temperature": cfg.get("model", {}).get("temperature"),
+            "max_tokens": cfg.get("model", {}).get("max_tokens"),
+            "reasoning_effort": cfg.get("model", {}).get("reasoning_effort"),
+        }
 
-        with open(out_path, "a", encoding="utf-8") as f:
-            for item in tqdm(items, desc=f"{system}:{split}"):
-                if item["_id"] in done_ids:
-                    continue
+        # 5. Initialize or verify immutable sidecar identity
+        sidecar_mgr = SidecarManager(out_path)
+        sidecar_mgr.initialize_or_verify(
+            system=system,
+            mode=cfg.get("run", {}).get("mode", "active"),
+            resolved_config_sha256=resolved_cfg_hash,
+            source_identity=source_ident,
+            manifest_meta=manifest_meta,
+            retriever_identity=retriever_ident,
+            provider_identity=provider_ident,
+            raw_config=cfg,
+        )
 
-                tr = Tracker()
-                t0 = time.time()
-                failed = False
+        # 6. Ensure safe append boundary (guarantee trailing newline on non-empty output)
+        prepare_output_file_for_append(out_path)
 
-                try:
-                    retriever = factory.for_item(item)
-                    r = dispatch(system, item, retriever, llm, nli, cfg, tr, memory)
-                except Exception as ex:
-                    r = {
-                        "answer": "",
-                        "pool_titles": [],
-                        "hops": 0,
-                        "error": repr(ex),
+        # 7. Model and retriever initialization (only after validation succeeds)
+        pooled = None
+        if cfg["retrieval"]["setting"] == "pooled":
+            dev_path = os.path.join(manifest_dir, "dev.jsonl")
+            test_path = os.path.join(manifest_dir, "test.jsonl")
+            if split in ("dev", "test") and os.path.exists(dev_path) and os.path.exists(test_path):
+                pooled = load_jsonl(dev_path) + load_jsonl(test_path)
+            else:
+                pooled = items
+
+        emb = Embedder(cfg["retrieval"]["embedder"])
+        factory = RetrieverFactory(cfg["retrieval"]["setting"], emb, pooled)
+        llm = LLM(
+            cfg,
+            use_cache=cfg["run"]["cache"],
+            namespace=cfg["run"]["cache_namespace"],
+        )
+
+        nli = None
+        if system == "erag":
+            from src.epistemic.nli import NLI
+            nli = NLI(cfg["nli"]["model"], cfg["nli"]["window"])
+
+        memory = None
+
+        mlflow.set_experiment("erag")
+        with mlflow.start_run(run_name=cfg["run"]["name"]):
+            mlflow.log_params(dict(flat(cfg)))
+            mlflow.set_tags({
+                "git_commit": git_commit(),
+                "system": system,
+                "split": split,
+                "retrieval_setting": cfg["retrieval"]["setting"],
+            })
+
+            newly_written = 0
+            with open(out_path, "a", encoding="utf-8") as f:
+                for item in tqdm(items, desc=f"{system}:{split}"):
+                    if item["_id"] in done_ids:
+                        continue
+
+                    tr = Tracker()
+                    t0 = time.time()
+                    failed = False
+
+                    try:
+                        retriever = factory.for_item(item)
+                        r = dispatch(system, item, retriever, llm, nli, cfg, tr, memory)
+                    except Exception as ex:
+                        r = {
+                            "answer": "",
+                            "pool_titles": [],
+                            "hops": 0,
+                            "error": repr(ex),
+                        }
+                        failed = True
+
+                    wall = time.time() - t0
+                    if system != "closed_book":
+                        rec_score, all_gold = retrieval_recall(r.get("pool_titles", []), item)
+                    else:
+                        rec_score, all_gold = None, None
+
+                    rec = {
+                        "id": item["_id"],
+                        "system": system,
+                        "setting": cfg["retrieval"]["setting"],
+                        "split": split,
+                        "type": item.get("type"),
+                        "question": item["question"],
+                        "gold": item["answer"],
+                        "em": exact_match(r["answer"], item["answer"]),
+                        "f1": f1_score(r["answer"], item["answer"]),
+                        "unknown": is_unknown(r["answer"]),
+                        "recall": rec_score,
+                        "all_gold": all_gold,
+                        "llm_calls": tr.llm_calls,
+                        "retrievals": tr.retrievals,
+                        "probe_searches": tr.probe_searches,
+                        "in_tokens": tr.in_tokens,
+                        "out_tokens": tr.out_tokens,
+                        "api_latency": tr.latency,
+                        "wall_latency": wall,
+                        "cache_hits": tr.cache_hits,
+                        "failures": tr.failures,
+                        "failed": failed,
                     }
-                    failed = True
+                    rec.update(r)
 
-                wall = time.time() - t0
-                if system != "closed_book":
-                    rec_score, all_gold = retrieval_recall(r.get("pool_titles", []), item)
-                else:
-                    rec_score, all_gold = None, None
+                    f.write(json.dumps(rec) + "\n")
+                    f.flush()
+                    newly_written += 1
 
-                rec = {
-                    "id": item["_id"],
-                    "system": system,
-                    "setting": cfg["retrieval"]["setting"],
-                    "split": split,
-                    "type": item.get("type"),
-                    "question": item["question"],
-                    "gold": item["answer"],
-                    "em": exact_match(r["answer"], item["answer"]),
-                    "f1": f1_score(r["answer"], item["answer"]),
-                    "unknown": is_unknown(r["answer"]),
-                    "recall": rec_score,
-                    "all_gold": all_gold,
-                    "llm_calls": tr.llm_calls,
-                    "retrievals": tr.retrievals,
-                    "probe_searches": tr.probe_searches,
-                    "in_tokens": tr.in_tokens,
-                    "out_tokens": tr.out_tokens,
-                    "api_latency": tr.latency,
-                    "wall_latency": wall,
-                    "cache_hits": tr.cache_hits,
-                    "failures": tr.failures,
-                    "failed": failed,
-                }
-                rec.update(r)
+            if len(done_ids) + newly_written >= len(items):
+                sidecar_mgr.mark_completed(completed_count=len(items))
 
-                f.write(json.dumps(rec) + "\n")
-                f.flush()
+            summary = summarize(out_path)
+            mlflow.log_metrics({k: v for k, v in summary.items() if isinstance(v, (int, float)) and not np.isnan(v)})
+            mlflow.log_artifact(out_path)
 
-        summary = summarize(out_path)
-        mlflow.log_metrics({k: v for k, v in summary.items() if isinstance(v, (int, float)) and not np.isnan(v)})
-        mlflow.log_artifact(out_path)
-
-        print("\n=== Experiment Summary ===")
-        print(json.dumps(summary, indent=2))
+            print("\n=== Experiment Summary ===")
+            print(json.dumps(summary, indent=2))
 
 
 if __name__ == "__main__":
