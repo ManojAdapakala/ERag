@@ -210,7 +210,6 @@ def test_high_prior_with_strong_contradiction_suppresses_abstention():
     assert should_abstain is False, "Current defect: does NOT abstain despite 0.95 contradiction"
 
 
-@pytest.mark.xfail(reason="Intended behavior: final decision policy should safely abstain on direct strong contradiction even if high draft prior remains")
 def test_high_prior_with_strong_contradiction_final_decision_should_abstain():
     """Desired Behavior Test: A question whose draft answer is strongly refuted by retrieved evidence
     must safely abstain in final decision (e.g. answer == 'unknown' or abstained is True),

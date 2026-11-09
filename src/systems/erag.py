@@ -241,13 +241,30 @@ def run_erag(
 
     ans = graph.answer_claim()
 
-    # Step 12: Safe abstention rule: withheld only if answer claim effective confidence is below threshold
-    abstain = "no_conf" not in ablate and (ans.eff < e.get("theta_abs", 0.4))
+    # Step 12: Safe abstention rule & contradiction veto
+    critical_claims = graph.answer_critical_claims()
+    theta_s = e.get("theta_s", 0.70)
+    theta_c = e.get("theta_c", 0.80)
+
+    has_contradiction_veto = False
+    if active and "no_conf" not in ablate:
+        for c in critical_claims:
+            has_strong_con = (c.status == "contradicted") or any(score >= theta_c for _, score in c.con)
+            has_strong_sup = any(score >= theta_s for _, score in c.sup)
+            # Veto unmitigated contradiction on answer-critical claims (no veto if mixed strong support exists)
+            if has_strong_con and not has_strong_sup:
+                has_contradiction_veto = True
+                break
+
+    low_conf_abstain = "no_conf" not in ablate and (ans.eff < e.get("theta_abs", 0.4))
+    abstain = bool(low_conf_abstain or has_contradiction_veto)
     answer = "unknown" if (active and abstain) else draft
 
     if not active:
         output_reason = "observational_draft"
-    elif abstain:
+    elif has_contradiction_veto:
+        output_reason = "abstained_contradiction_veto"
+    elif low_conf_abstain:
         output_reason = "abstained_low_confidence"
     else:
         output_reason = "answered"

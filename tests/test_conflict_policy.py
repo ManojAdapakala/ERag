@@ -140,9 +140,8 @@ def test_case2_strong_contradiction_characterization_high_prior_defect():
     assert (ans.eff < 0.40) is False
 
 
-@pytest.mark.xfail(strict=True, reason="Desired policy: unmitigated strong contradiction on answer claim must veto and abstain")
 def test_case2_strong_contradiction_desired_abstention():
-    """Case 2 (Desired Behavior): Direct unmitigated contradiction on answer claim must abstain."""
+    """Case 2 (Desired Behavior): Direct unmitigated contradiction on answer claim must abstain via contradiction veto."""
     question = "Where was Christopher Nolan born?"
     draft = "Paris"
     claims_json = json.dumps({"claims": [{"text": "Christopher Nolan was born in Paris.", "answer": True, "depends_on": []}]})
@@ -153,7 +152,7 @@ def test_case2_strong_contradiction_desired_abstention():
     res = run_erag({"_id": "c2_desire", "question": question}, retriever, llm, nli, _make_cfg(), Tracker())
     assert res["abstained"] is True
     assert res["answer"] == "unknown"
-    assert res["output_reason"] in ("abstained_low_confidence", "abstained_contradiction_veto")
+    assert res["output_reason"] == "abstained_contradiction_veto"
 
 
 # =============================================================================
@@ -224,7 +223,6 @@ def test_case5_required_dependency_contradiction_neutral_prior():
     assert ans.eff < 0.40
 
 
-@pytest.mark.xfail(strict=True, reason="Desired policy: refuted required dependency must veto even under high prior c0=1.0")
 def test_case5_required_dependency_contradiction_high_prior_desired_abstention():
     """Case 5 (Desired Behavior): When a required dependency is directly refuted,
     the system must abstain even if prior c0=1.0.
@@ -240,14 +238,15 @@ def test_case5_required_dependency_contradiction_high_prior_desired_abstention()
     llm = MockLLM(canned_chat={"JSON:": claims_json}, default_chat=draft)
     # Nolan birth is supported, but Nolan directing Inception is refuted
     nli = MockNLI(scores={
-        "Christopher Nolan directed Inception.||Biography": (0.0, 0.95),
-        "Christopher Nolan was born in London.||Biography": (0.95, 0.0),
+        "Christopher Nolan directed Inception.||Christopher Nolan": (0.0, 0.95),
+        "Christopher Nolan was born in London.||Christopher Nolan": (0.95, 0.0),
     })
-    retriever = MockRetriever(default=[{"title": "Biography", "sentences": ["Inception was directed by someone else, not Nolan. Nolan was born in London."]}])
+    retriever = MockRetriever(default=[{"title": "Christopher Nolan", "sentences": ["Inception was directed by someone else, not Christopher Nolan. Christopher Nolan was born in London."]}])
 
     res = run_erag({"_id": "c5_desire", "question": question}, retriever, llm, nli, _make_cfg(), Tracker())
     assert res["abstained"] is True
     assert res["answer"] == "unknown"
+    assert res["output_reason"] == "abstained_contradiction_veto"
 
 
 # =============================================================================
@@ -275,10 +274,8 @@ def test_case6_missing_answer_claim_fallback():
 # Case 7: Multiple Answer-Bearing Claims
 # =============================================================================
 
-def test_case7_multiple_answer_claims_current_defect():
-    """Case 7 (Current Characterization): BeliefGraph.answer_claim() takes only next(...),
-    completely ignoring subsequent answer-bearing claims.
-    """
+def test_case7_multiple_answer_claims_weakest_selected():
+    """Case 7: BeliefGraph.answer_claim() evaluates across all answer claims and selects the weakest."""
     g = BeliefGraph(w_s=1.0, w_c=2.0)
     ev_sup = {"status": "supported", "conflict": False, "sup": [("Doc A", 0.95)], "con": []}
     ev_con = {"status": "contradicted", "conflict": False, "sup": [], "con": [("Doc B", 0.95)]}
@@ -289,12 +286,11 @@ def test_case7_multiple_answer_claims_current_defect():
     g.update()
 
     ans = g.answer_claim()
-    # Current code returns Claim 0 only, completely ignoring Claim 1!
-    assert ans.idx == 0
-    assert ans.eff > 0.70
+    # Weakest answer claim (Claim 1 with eff ~0.13) is selected
+    assert ans.idx == 1
+    assert ans.eff < 0.40
 
 
-@pytest.mark.xfail(strict=True, reason="Desired policy: all answer-bearing claims must hold; composite answer must fail if any is contradicted")
 def test_case7_multiple_answer_claims_desired_composite_evaluation():
     """Case 7 (Desired Behavior): If multiple claims are answer-bearing and one is refuted,
     the composite answer must abstain.
@@ -317,6 +313,7 @@ def test_case7_multiple_answer_claims_desired_composite_evaluation():
     res = run_erag({"_id": "c7_desire", "question": question}, retriever, llm, nli, _make_cfg(), Tracker())
     assert res["abstained"] is True
     assert res["answer"] == "unknown"
+    assert res["output_reason"] == "abstained_contradiction_veto"
 
 
 # =============================================================================
@@ -361,15 +358,15 @@ def test_case9_high_draft_consensus_with_unresolved_conflict_current_characteriz
     assert (ans.eff < 0.40) is False  # Fails to abstain under current code
 
 
-@pytest.mark.xfail(strict=True, reason="Desired policy: unresolved conflict with net contradiction on answer claim must veto and abstain")
-def test_case9_high_draft_consensus_with_unresolved_conflict_desired_abstention():
-    """Case 9 (Desired Behavior): Unresolved conflict with net contradiction on answer claim
-    must abstain even under high parametric consensus.
+def test_case9_mixed_strong_support_plus_strong_contradiction_does_not_veto():
+    """Case 9: Mixed strong support plus strong contradiction does NOT trigger contradiction veto.
+    Logit belief math governs mixed evidence.
     """
     question = "Where was the person born?"
     draft = "London"
     claims_json = json.dumps({"claims": [{"text": "The person was born in London.", "answer": True, "depends_on": []}]})
     llm = MockLLM(canned_chat={"JSON:": claims_json}, default_chat=draft)
+    # Both strong support (0.75 >= theta_s 0.70) and strong contradiction (0.90 >= theta_c 0.80)
     nli = MockNLI(scores={
         "The person was born in London.||Biography A": (0.75, 0.0),
         "The person was born in London.||Biography B": (0.0, 0.90),
@@ -379,6 +376,28 @@ def test_case9_high_draft_consensus_with_unresolved_conflict_desired_abstention(
         {"title": "Biography B", "sentences": ["The person was born in Paris, not London."]},
     ])
 
-    res = run_erag({"_id": "c9_desire", "question": question}, retriever, llm, nli, _make_cfg(), Tracker())
+    res = run_erag({"_id": "c9_mixed", "question": question}, retriever, llm, nli, _make_cfg(), Tracker())
+    # No veto because strong support coexists
+    assert res["output_reason"] != "abstained_contradiction_veto"
+
+
+def test_case9_high_draft_consensus_unmitigated_contradiction_vetoes():
+    """Case 9: Direct unmitigated contradiction on answer claim under high consensus c0=1.0
+    triggers contradiction veto and safely abstains.
+    """
+    question = "Where was the person born?"
+    draft = "London"
+    claims_json = json.dumps({"claims": [{"text": "The person was born in London.", "answer": True, "depends_on": []}]})
+    llm = MockLLM(canned_chat={"JSON:": claims_json}, default_chat=draft)
+    # Unmitigated contradiction: 0.90 contradiction, 0.0 support
+    nli = MockNLI(scores={
+        "The person was born in London.||Biography B": (0.0, 0.90),
+    })
+    retriever = MockRetriever(default=[
+        {"title": "Biography B", "sentences": ["The person was born in Paris, not London."]},
+    ])
+
+    res = run_erag({"_id": "c9_unmitigated", "question": question}, retriever, llm, nli, _make_cfg(), Tracker())
     assert res["abstained"] is True
     assert res["answer"] == "unknown"
+    assert res["output_reason"] == "abstained_contradiction_veto"

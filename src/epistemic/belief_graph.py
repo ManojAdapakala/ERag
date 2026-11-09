@@ -96,9 +96,28 @@ class BeliefGraph:
                 c.eff = c.conf
         return self
 
+    def answer_claims(self) -> List[Claim]:
+        """Return all answer-bearing claim nodes (or final claim as fallback)."""
+        ans_nodes = [c for c in self.claims if c.answer_bearing]
+        return ans_nodes if ans_nodes else ([self.claims[-1]] if self.claims else [])
+
+    def answer_critical_claims(self) -> List[Claim]:
+        """Return all answer-bearing claims and their upstream dependency ancestors."""
+        ans_nodes = self.answer_claims()
+        critical_indices = set()
+        queue = [c.idx for c in ans_nodes]
+        while queue:
+            idx = queue.pop(0)
+            if idx not in critical_indices:
+                critical_indices.add(idx)
+                if 0 <= idx < len(self.claims):
+                    queue.extend(self.claims[idx].depends_on)
+        return [self.claims[i] for i in sorted(critical_indices)]
+
     def answer_claim(self) -> Claim:
-        """Return the answer-bearing claim node (or final claim as fallback)."""
-        return next((c for c in self.claims if c.answer_bearing), self.claims[-1])
+        """Return the answer-bearing claim node with lowest effective confidence (or final claim as fallback)."""
+        ans_nodes = self.answer_claims()
+        return min(ans_nodes, key=lambda c: c.eff) if ans_nodes else self.claims[-1]
 
     def gaps(self, theta_gap: float, use_status: bool = True) -> List[Claim]:
         """Identify claims that have insufficient support or fall below theta_gap."""
