@@ -62,7 +62,7 @@ def _detect_relational_bridge(
     """Detect ungrounded relational bridge pattern (e.g. director of Inception)."""
     # Matches relational patterns like "director of Inception", "author of The Hobbit", etc.
     m = re.search(
-        r'\b(?:the\s+)?(director|writer|author|creator|inventor|founder|president|leader|actor|singer|star)\s+of\s+([A-Za-z0-9\s\'\-]+?)(?:\s+born|\s+die|\s+live|\s+win|\?|$)',
+        r'\b(?:the\s+)?(director|writer|author|creator|inventor|founder|president|leader|actor|singer|star)\s+of\s+([A-Za-z0-9\s\'\-]+?)(?:\s+(?:born|die|died|live|lived|win|won|start|started|release|released|create|created|first|begin)|\?|$)',
         question,
         re.IGNORECASE,
     )
@@ -88,15 +88,29 @@ def _detect_relational_bridge(
     if q_entity.lower() in full_pool:
         return None
 
-    # Extract subject entity candidate from draft answer
-    cand_match = re.search(r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b', answer)
-    cand_entity = cand_match.group(1).strip() if cand_match else ""
-    if not cand_entity:
-        words = answer.strip().strip(".").split()
-        if len(words) <= 3:
-            cand_entity = " ".join(words)
-        else:
-            return None
+    # Extract subject entity candidate from draft answer:
+    # 1. Prefer subject clause prior to primary verbs
+    verb_re = re.compile(
+        r'\b(is|was|were|are|has|have|had|served|became|directed|starred|defeated|won|played|wrote|invented|created|lived|started|born)\b',
+        re.IGNORECASE,
+    )
+    m_verb = verb_re.search(answer)
+    subj_clause = answer[:m_verb.start()].strip() if m_verb else answer.strip().strip(".")
+    subj_clause = re.sub(r'^(The|A|An)\s+', '', subj_clause).strip()
+
+    cand_entity = ""
+    if subj_clause and subj_clause.lower() != q_entity.lower():
+        cand_entity = subj_clause
+    else:
+        cap_phrases = re.findall(r'\b(?:[A-Z0-9\.\'-]+(?:\s+[A-Z0-9\.\'-]+)*)\b', answer)
+        for p in cap_phrases:
+            cleaned = p.strip("., ")
+            if cleaned.lower() not in (q_entity.lower(), "the", "a", "an"):
+                cand_entity = cleaned
+                break
+
+    if not cand_entity or cand_entity.lower() == q_entity.lower():
+        return None
 
     if relation == "director":
         bridge_text = f"{cand_entity} directed {q_entity}."
