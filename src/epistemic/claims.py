@@ -31,14 +31,20 @@ def _parse(raw: str, max_claims: int) -> List[Dict[str, Any]]:
         if not isinstance(r, dict) or not str(r.get("text", "")).strip():
             continue
         # Dependencies must point only to EARLIER claims in the list (enforces DAG acyclicity)
+        raw_deps = r.get("depends_on", [])
         deps = [
-            d for d in r.get("depends_on", [])
+            d for d in raw_deps
             if isinstance(d, int) and 0 <= d < len(out)
         ]
+        missing_deps = any(
+            isinstance(d, int) and (d < 0 or d >= len(out))
+            for d in raw_deps
+        )
         out.append({
             "text": str(r["text"]).strip(),
             "answer_bearing": bool(r.get("answer")),
             "depends_on": deps,
+            "missing_deps": bool(missing_deps),
             "fallback": False,
         })
 
@@ -46,6 +52,72 @@ def _parse(raw: str, max_claims: int) -> List[Dict[str, Any]]:
     if out and not any(c["answer_bearing"] for c in out):
         out[-1]["answer_bearing"] = True
     return out
+
+
+def _detect_relational_bridge(
+    question: str,
+    answer: str,
+    paras: List[dict],
+) -> Optional[Dict[str, str]]:
+    """Detect ungrounded relational bridge pattern (e.g. director of Inception)."""
+    # Matches relational patterns like "director of Inception", "author of The Hobbit", etc.
+    m = re.search(
+        r'\b(?:the\s+)?(director|writer|author|creator|inventor|founder|president|leader|actor|singer|star)\s+of\s+([A-Za-z0-9\s\'\-]+?)(?:\s+born|\s+die|\s+live|\s+win|\?|$)',
+        question,
+        re.IGNORECASE,
+    )
+    if not m:
+        return None
+
+    relation = m.group(1).lower()
+    q_entity = m.group(2).strip().strip("?,.")
+    if not q_entity:
+        return None
+
+    # Check if question entity is already mentioned in evidence pool
+    pool_texts = []
+    for p in paras:
+        pool_texts.append(p.get("title", ""))
+        s = p.get("sentences", [])
+        if isinstance(s, list):
+            pool_texts.extend(s)
+        elif "text" in p:
+            pool_texts.append(p["text"])
+    full_pool = " ".join(pool_texts).lower()
+
+    if q_entity.lower() in full_pool:
+        return None
+
+    # Extract subject entity candidate from draft answer
+    cand_match = re.search(r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b', answer)
+    cand_entity = cand_match.group(1).strip() if cand_match else ""
+    if not cand_entity:
+        words = answer.strip().strip(".").split()
+        if len(words) <= 3:
+            cand_entity = " ".join(words)
+        else:
+            return None
+
+    if relation == "director":
+        bridge_text = f"{cand_entity} directed {q_entity}."
+    elif relation in ("writer", "author"):
+        bridge_text = f"{cand_entity} wrote {q_entity}."
+    elif relation in ("creator", "inventor"):
+        bridge_text = f"{cand_entity} invented {q_entity}."
+    else:
+        bridge_text = f"{cand_entity} is the {relation} of {q_entity}."
+
+    ans_text = answer.strip()
+    if not ans_text.endswith("."):
+        ans_text += "."
+
+    return {
+        "relation": relation,
+        "q_entity": q_entity,
+        "cand_entity": cand_entity,
+        "bridge_text": bridge_text,
+        "ans_text": ans_text,
+    }
 
 
 def extract_claims(
@@ -68,6 +140,39 @@ def extract_claims(
     raw_response = llm.chat(msgs, tracker, temperature=0.0)
     claims = _parse(raw_response, max_claims)
 
+    bridge_info = _detect_relational_bridge(question, answer, paras)
+    if bridge_info:
+        q_ent_lower = bridge_info["q_entity"].lower()
+        has_bridge = any(q_ent_lower in c["text"].lower() for c in claims)
+        if not has_bridge:
+            bridge_claim = {
+                "text": bridge_info["bridge_text"],
+                "answer_bearing": False,
+                "depends_on": [],
+                "missing_deps": False,
+                "fallback": False,
+            }
+            if not claims:
+                claims = [
+                    bridge_claim,
+                    {
+                        "text": bridge_info["ans_text"],
+                        "answer_bearing": True,
+                        "depends_on": [0],
+                        "missing_deps": False,
+                        "fallback": False,
+                    },
+                ]
+            else:
+                new_claims = [bridge_claim]
+                for c in claims:
+                    shifted_deps = [d + 1 for d in c["depends_on"]]
+                    if c["answer_bearing"] and 0 not in shifted_deps:
+                        shifted_deps.append(0)
+                    c["depends_on"] = sorted(shifted_deps)
+                    new_claims.append(c)
+                claims = new_claims[:max_claims]
+
     if not claims:
         # Fallback to single atomic claim when structured generation fails
         claims = [
@@ -75,6 +180,7 @@ def extract_claims(
                 "text": f'The answer to "{question}" is {answer}.',
                 "answer_bearing": True,
                 "depends_on": [],
+                "missing_deps": False,
                 "fallback": True,
             }
         ]

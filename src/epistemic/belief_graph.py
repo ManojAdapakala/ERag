@@ -34,6 +34,7 @@ class Claim:
     conflict: bool = False
     conf: float = 0.0  # Confidence after logit-space evidence update
     eff: float = 0.0   # Effective confidence after weakest-link propagation
+    missing_deps: bool = False  # True if declared dependencies reference absent/invalid nodes
 
 
 class BeliefGraph:
@@ -59,9 +60,13 @@ class BeliefGraph:
         depends_on: List[int],
         c0: float,
         ev: Dict[str, Any],
+        missing_deps: bool = False,
     ) -> None:
         """Add a claim node to the graph. Only backwards edges (0 <= d < idx) are retained to guarantee acyclicity."""
         idx = len(self.claims)
+        has_missing = missing_deps or any(
+            isinstance(d, int) and (d < 0 or d >= idx) for d in depends_on
+        )
         deps = [d for d in depends_on if isinstance(d, int) and 0 <= d < idx]
         self.claims.append(
             Claim(
@@ -70,10 +75,11 @@ class BeliefGraph:
                 answer_bearing=answer_bearing,
                 depends_on=deps,
                 c0=c0,
-                status=ev.get("status", "unresolved"),
+                status="unresolved" if (has_missing and ev.get("status") == "supported") else ev.get("status", "unresolved"),
                 sup=list(ev.get("sup", [])),
                 con=list(ev.get("con", [])),
                 conflict=bool(ev.get("conflict", False)),
+                missing_deps=bool(has_missing),
             )
         )
 
@@ -94,6 +100,8 @@ class BeliefGraph:
                 c.eff = min([c.conf] + parents_eff)
             else:
                 c.eff = c.conf
+            if c.missing_deps:
+                c.eff = min(c.eff, 0.20)
         return self
 
     def answer_claims(self) -> List[Claim]:

@@ -92,8 +92,8 @@ def test_missing_dependency_causes_false_fast_path_exit():
     
     Question: Where was the director of Inception born?
     Draft: Christopher Nolan was born in London.
-    Missing Premise: Christopher Nolan directed Inception (never extracted or verified).
-    Current code treats the question as complete and exits at Hop 0 (Fast Path).
+    Missing Premise: Christopher Nolan directed Inception (bridge premise).
+    Fixed behavior: System blocks fast path, attempts targeted retrieval, and safely abstains.
     """
     question = "Where was the director of Inception born?"
     draft_answer = "Christopher Nolan was born in London."
@@ -146,18 +146,19 @@ def test_missing_dependency_causes_false_fast_path_exit():
     item = {"_id": "test_dep_1", "question": question}
     result = run_erag(item, retriever, llm, nli, cfg, tracker)
     
-    # CURRENT BEHAVIOR: Exits at hop 0 (Fast Path) despite missing the director bridge premise
-    assert result["hops"] == 0, "Characterization: current code exits at hop 0 without retrieving the bridge premise"
-    assert result["answer"] == draft_answer
-    assert result["abstained"] is False
-    # The retriever was only called once (initial retrieval for question), never for follow-up
-    assert tracker.retrievals == 1
+    # Fast path is blocked; retrieval was attempted; abstained safely when no novel evidence found
+    assert result["fast_path"] is False, "Must not take fast path without bridge premise"
+    assert result["loop_stop_reason"] == "no_novel_evidence"
+    assert result["abstained"] is True
+    assert result["answer"] == "unknown"
+    assert result["output_reason"] == "abstained_low_confidence"
+    # Initial search + 1 targeted retrieval probe search
+    assert tracker.retrievals == 2
 
 
-@pytest.mark.xfail(reason="E-RAG currently lacks bridge-premise dependency extraction; intended behavior is to reject Fast-Path on missing bridge premises")
 def test_missing_dependency_should_not_fast_path():
     """Regression / Desired Behavior Test: Incomplete draft missing intermediate bridge
-    entity must NOT exit at Hop 0.
+    entity must NOT exit at Hop 0, and retrieves bridge entity.
     """
     question = "Where was the director of Inception born?"
     draft_answer = "Christopher Nolan was born in London."
@@ -166,18 +167,31 @@ def test_missing_dependency_should_not_fast_path():
         "title": "Christopher Nolan",
         "sentences": ["Christopher Nolan was born in London."],
     }]
+    bridge_doc = [{
+        "title": "Inception (film)",
+        "sentences": ["Inception is a 2010 film directed by Christopher Nolan."],
+    }]
     
-    # Under desired behavior, missing bridge ("Who directed Inception?") must trigger hop > 0
-    # or identify an ungrounded premise gap.
+    # Under desired behavior, missing bridge ("Who directed Inception?") triggers follow-up
+    # retrieval (hops > 0).
     llm = MockLLM(default_chat=draft_answer)
-    nli = MockNLI(default_score=(0.95, 0.01))
-    retriever = MockRetriever(default=initial_pool)
+    nli = MockNLI(
+        scores={
+            "Christopher Nolan was born in London.||Christopher Nolan": (0.95, 0.01),
+            "Christopher Nolan directed Inception.||Inception (film)": (0.95, 0.01),
+        },
+        default_score=(0.0, 0.0),
+    )
+    retriever = MockRetriever(
+        responses={question: initial_pool},
+        default=bridge_doc,
+    )
     cfg = {"retrieval": {"k": 3}, "erag": {"mode": "active", "max_hops": 2}}
     item = {"_id": "test_dep_2", "question": question}
     
     result = run_erag(item, retriever, llm, nli, cfg, Tracker())
-    # Desired assertion: Should NOT exit at hop 0 when the question's bridge relation is unverified
     assert result["hops"] > 0, "Desired: system should retrieve bridge entity before completing"
+    assert result["fast_path"] is False
 
 
 # -----------------------------------------------------------------------------

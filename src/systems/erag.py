@@ -60,7 +60,7 @@ def build_graph(
             theta_s = n.get("theta_s", 0.5)
             theta_c = n.get("theta_c", 0.5)
             ev = nli.verify(c["text"], passages, theta_s=theta_s, theta_c=theta_c, pre_filter=pre_filter)
-        g.add(c["text"], c["answer_bearing"], c["depends_on"], c0, ev)
+        g.add(c["text"], c["answer_bearing"], c["depends_on"], c0, ev, missing_deps=c.get("missing_deps", False))
     return g.update()
 
 
@@ -192,14 +192,26 @@ def run_erag(
             break
 
         # Step 8 & 9: Gap selection and No-Gap Fast Path
+        critical_claims = graph.answer_critical_claims()
+        critical_supported = bool(critical_claims) and all(
+            c.status == "supported"
+            and c.eff >= e.get("theta_fast", 0.8)
+            and not getattr(c, "missing_deps", False)
+            for c in critical_claims
+        )
+
         if "no_conf" in ablate:
             target = graph.answer_claim()
-        elif gaps:
-            target = graph.weakest(gaps)
-        elif "no_fast" in ablate or graph.min_eff() < e.get("theta_fast", 0.8):
+        elif not critical_supported:
+            critical_gaps = [
+                c for c in critical_claims
+                if c.status != "supported" or c.eff < e.get("theta_gap", 0.6) or getattr(c, "missing_deps", False)
+            ]
+            target = graph.weakest(critical_gaps) if critical_gaps else graph.weakest(critical_claims)
+        elif "no_fast" in ablate:
             target = graph.weakest(graph.claims)
         else:
-            stop_reason = "fast_path"  # Fast Path: all claims sufficiently supported
+            stop_reason = "fast_path"  # Fast Path: all critical claims sufficiently supported
             break
 
         # Saturation check: if pool has reached capacity, further retrieval cannot expand context
@@ -256,7 +268,10 @@ def run_erag(
                 has_contradiction_veto = True
                 break
 
-    low_conf_abstain = "no_conf" not in ablate and (ans.eff < e.get("theta_abs", 0.4))
+    low_conf_abstain = "no_conf" not in ablate and (
+        ans.eff < e.get("theta_abs", 0.4)
+        or any(c.status != "supported" for c in critical_claims)
+    )
     abstain = bool(low_conf_abstain or has_contradiction_veto)
     answer = "unknown" if (active and abstain) else draft
 
